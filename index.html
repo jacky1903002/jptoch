@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本人學漢語 - Japanese Learn Chinese (Duolingo Style)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Nunito & Noto Sans JP/TC -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <!-- External Libraries: Chart.js, SheetJS XLSX, html2canvas, jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Nunito', 'Noto Sans JP', 'sans-serif'],
+          },
+          colors: {
+            duoGreen: '#58cc02',
+            duoGreenDark: '#46a302',
+            duoBlue: '#1cb0f6',
+            duoBlueDark: '#1899d6',
+            duoYellow: '#ffc800',
+            duoYellowDark: '#e5b200',
+            duoPurple: '#ce82ff',
+            duoPurpleDark: '#b061e0',
+            duoRed: '#ff4b4b',
+            duoRedDark: '#ea2b2b',
+            duoGray: '#e5e5e5',
+            duoGrayDark: '#afafaf',
+            duoCard: '#ffffff'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Nunito', 'Noto Sans JP', sans-serif;
+      background-color: #f7f9fa;
+    }
+    .btn-3d {
+      transition: all 0.1s ease;
+      box-shadow: 0 4px 0 0 rgba(0,0,0,0.2);
+    }
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
+    }
+    .btn-green-3d {
+      background-color: #58cc02;
+      box-shadow: 0 4px 0 0 #46a302;
+    }
+    .btn-green-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 0 #46a302;
+    }
+    .btn-blue-3d {
+      background-color: #1cb0f6;
+      box-shadow: 0 4px 0 0 #1899d6;
+    }
+    .btn-blue-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 0 #1899d6;
+    }
+    .btn-purple-3d {
+      background-color: #ce82ff;
+      box-shadow: 0 4px 0 0 #b061e0;
+    }
+    .btn-purple-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 0 #b061e0;
+    }
+    .btn-yellow-3d {
+      background-color: #ffc800;
+      box-shadow: 0 4px 0 0 #e5b200;
+      color: #4b4b4b;
+    }
+    .btn-yellow-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 0 #e5b200;
+    }
+    .badge-card {
+      transition: transform 0.2s;
+    }
+    .badge-card:hover {
+      transform: scale(1.03);
+    }
+    /* Hide scrollbar for clean UI */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- TOP HEADER / NAV BAR -->
+  <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-40 px-4 py-3 shadow-sm">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+      
+      <!-- LOGO & TITLE -->
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 bg-duoGreen rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-md transform -rotate-3">
+          漢
+        </div>
+        <div>
+          <h1 class="text-xl font-black text-slate-800 tracking-tight leading-none">日本人學漢語</h1>
+          <p class="text-xs font-bold text-duoGreen">Chinese for Japanese Learners</p>
+        </div>
+      </div>
+
+      <!-- STATUS & TIMESTAMP -->
+      <div class="flex items-center space-x-4 text-xs font-bold">
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-400 mr-2 animate-pulse" id="statusDot"></span>
+          <span id="statusText">Connecting...</span>
+        </div>
+
+        <!-- Last Saved Display -->
+        <div class="hidden md:flex items-center text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+          <i class="fa-solid fa-cloud-arrow-up mr-2 text-duoBlue"></i>
+          <span data-i18n="lastSaved">Last Saved:</span>
+          <span id="lastSavedTime" class="ml-1 text-slate-700 font-extrabold">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- LANGUAGE TOGGLE & USER PROFILE BUTTON -->
+      <div class="flex items-center space-x-2">
+        <!-- Multi-language Select Buttons -->
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+          <button onclick="setLanguage('ja')" id="lang-ja" class="px-2.5 py-1 text-xs font-black rounded-lg transition-all bg-white text-duoGreen shadow-sm">日</button>
+          <button onclick="setLanguage('zh')" id="lang-zh" class="px-2.5 py-1 text-xs font-black rounded-lg transition-all text-slate-600 hover:text-slate-900">繁</button>
+          <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 text-xs font-black rounded-lg transition-all text-slate-600 hover:text-slate-900">EN</button>
+        </div>
+
+        <!-- User Stats Pill / Login Modal Trigger -->
+        <div id="userHeaderBar" class="flex items-center space-x-2">
+          <!-- Populated by JS -->
+          <button onclick="openAuthModal()" class="btn-green-3d text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider">
+            <i class="fa-solid fa-user-plus mr-1.5"></i> <span data-i18n="loginBtn">Login / Sign Up</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER WITH SIDEBAR NAVIGATION -->
+  <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col md:flex-row gap-6 p-4 md:p-6">
+    
+    <!-- SIDEBAR NAV -->
+    <aside class="w-full md:w-64 flex-shrink-0">
+      <nav class="bg-white rounded-3xl p-3 border-2 border-slate-200 shadow-sm sticky top-24 space-y-2">
+        
+        <button onclick="switchTab('quiz')" id="nav-quiz" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all bg-duoGreen text-white shadow-sm">
+          <i class="fa-solid fa-gamepad text-lg w-6"></i>
+          <span data-i18n="tabQuiz">10-Question Quiz</span>
+        </button>
+
+        <button onclick="switchTab('badges')" id="nav-badges" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100">
+          <i class="fa-solid fa-award text-lg w-6 text-duoYellowDark"></i>
+          <span data-i18n="tabBadges">Badges & Streaks</span>
+        </button>
+
+        <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100">
+          <i class="fa-solid fa-ranking-star text-lg w-6 text-duoBlue"></i>
+          <span data-i18n="tabLeaderboard">Leaderboard & Stats</span>
+        </button>
+
+        <button onclick="switchTab('bank')" id="nav-bank" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100">
+          <i class="fa-solid fa-book-bookmark text-lg w-6 text-duoPurple"></i>
+          <span data-i18n="tabBank">Question Bank</span>
+        </button>
+
+        <hr class="border-slate-200 my-2">
+
+        <!-- Global Export Bar inside Sidebar -->
+        <div class="p-2 space-y-2">
+          <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider px-2" data-i18n="exportTools">Export Active Tab</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportCurrentTabPNG()" class="flex items-center justify-center space-x-1 py-2 px-3 rounded-xl border-2 border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs">
+              <i class="fa-solid fa-file-image text-duoGreen"></i>
+              <span>PNG</span>
+            </button>
+            <button onclick="exportCurrentTabPDF()" class="flex items-center justify-center space-x-1 py-2 px-3 rounded-xl border-2 border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs">
+              <i class="fa-solid fa-file-pdf text-duoRed"></i>
+              <span>PDF</span>
+            </button>
+          </div>
+        </div>
+
+      </nav>
+    </aside>
+
+    <!-- TAB CONTENTS -->
+    <main class="flex-grow w-full max-w-full overflow-hidden">
+      
+      <!-- PAGE 1: 10-QUESTION QUIZ ENGINE -->
+      <section id="tab-content-quiz" class="space-y-6">
+        
+        <!-- Quiz Banner & Progress -->
+        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden" id="quizExportArea">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <span class="bg-duoGreen/10 text-duoGreen font-black px-3 py-1 rounded-full text-xs uppercase tracking-wider" data-i18n="quizBadge">Daily Challenge</span>
+              <h2 class="text-2xl font-black text-slate-800 mt-1" data-i18n="quizTitle">Random 10-Question Chinese Exam</h2>
+              <p class="text-slate-500 font-bold text-sm" data-i18n="quizSubtitle">Practice Chinese Pinyin, Grammar & Vocabulary for Japanese Speakers</p>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+              <button onclick="startNewQuiz()" class="btn-blue-3d text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span data-i18n="resetQuiz">New 10 Questions</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-slate-100 h-5 rounded-full p-1 border border-slate-200 mb-2">
+            <div id="quizProgressBar" class="bg-duoGreen h-full rounded-full transition-all duration-300 w-0"></div>
+          </div>
+          <div class="flex justify-between text-xs font-black text-slate-400 px-1">
+            <span id="quizProgressText">Question 0 / 10</span>
+            <span id="quizScoreText">Score: 0 XP</span>
+          </div>
+
+          <!-- QUIZ CONTAINER CARD -->
+          <div id="quizCardContainer" class="mt-6 bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 md:p-8 min-h-[360px] flex flex-col justify-between">
+            <!-- Dynamic Content Injected via JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- PAGE 2: BADGES & ACHIEVEMENTS SYSTEM -->
+      <section id="tab-content-badges" class="hidden space-y-6">
+        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm" id="badgesExportArea">
+          
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b-2 border-slate-100 pb-4">
+            <div>
+              <h2 class="text-2xl font-black text-slate-800" data-i18n="badgeTitle">Achievements & Badges</h2>
+              <p class="text-slate-500 font-bold text-sm" data-i18n="badgeSubtitle">Track your Continuous Logins (1~1000) and Perfect 10-Quiz Streaks (1~1000)</p>
+            </div>
+            
+            <!-- Quick Stat Summary -->
+            <div class="flex space-x-3">
+              <div class="bg-duoYellow/10 border border-duoYellow/30 px-4 py-2 rounded-2xl text-center">
+                <p class="text-xs font-extrabold text-duoYellowDark uppercase" data-i18n="loginStreak">Login Streak</p>
+                <p class="text-xl font-black text-slate-800" id="badgeLoginDaysCount">0 <span class="text-xs font-bold">Days</span></p>
+              </div>
+              <div class="bg-duoPurple/10 border border-duoPurple/30 px-4 py-2 rounded-2xl text-center">
+                <p class="text-xs font-extrabold text-duoPurpleDark uppercase" data-i18n="quizStreak">10-Quiz Streaks</p>
+                <p class="text-xl font-black text-slate-800" id="badgePerfectQuizCount">0 <span class="text-xs font-bold">Times</span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-TABS FOR BADGES -->
+          <div class="mb-6 flex space-x-3">
+            <button onclick="switchBadgeCategory('login')" id="badge-cat-login" class="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-duoYellow text-slate-900 border-b-4 border-duoYellowDark">
+              <i class="fa-solid fa-calendar-check mr-1.5"></i> <span data-i18n="catLogin">Login Streaks (1~1000)</span>
+            </button>
+            <button onclick="switchBadgeCategory('quiz')" id="badge-cat-quiz" class="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 text-slate-600 border-b-4 border-slate-300">
+              <i class="fa-solid fa-circle-check mr-1.5"></i> <span data-i18n="catQuiz">Perfect Streaks (1~1000)</span>
+            </button>
+          </div>
+
+          <!-- BADGES GRID -->
+          <div id="badgesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <!-- Dynamic Badges Injected via JS -->
+          </div>
+
+        </div>
+      </section>
+
+      <!-- PAGE 3: PLAYER LEADERBOARD & ANALYTICS -->
+      <section id="tab-content-leaderboard" class="hidden space-y-6">
+        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm space-y-6" id="leaderboardExportArea">
+          
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-100 pb-4">
+            <div>
+              <h2 class="text-2xl font-black text-slate-800" data-i18n="leaderboardTitle">Global Player Leaderboard</h2>
+              <p class="text-slate-500 font-bold text-sm" data-i18n="leaderboardSubtitle">Realtime Database player rankings & learning performance analytics</p>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <button onclick="exportLeaderboardExcel()" class="btn-green-3d text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-excel"></i>
+                <span data-i18n="exportExcel">Export Excel</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- CHART CONTAINER -->
+          <div class="bg-slate-50 border-2 border-slate-200 rounded-3xl p-5">
+            <h3 class="text-base font-black text-slate-700 mb-3 flex items-center">
+              <i class="fa-solid fa-chart-line text-duoBlue mr-2"></i>
+              <span data-i18n="chartTitle">Player XP & Streak Analytics Distribution</span>
+            </h3>
+            <div class="w-full h-64">
+              <canvas id="leaderboardChart"></canvas>
+            </div>
+          </div>
+
+          <!-- LEADERBOARD TABLE -->
+          <div class="overflow-x-auto rounded-2xl border-2 border-slate-200">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-wider border-b-2 border-slate-200">
+                  <th class="p-4 text-center">Rank</th>
+                  <th class="p-4" data-i18n="colPlayer">Player Name</th>
+                  <th class="p-4 text-center" data-i18n="colXP">Total XP</th>
+                  <th class="p-4 text-center" data-i18n="colLoginStreak">Login Days</th>
+                  <th class="p-4 text-center" data-i18n="colQuizStreak">10-Quiz Streaks</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardTableBody" class="divide-y divide-slate-200 font-bold text-sm">
+                <!-- Dynamic Rows -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- PAGE 4: QUESTION BANK & SEARCHABLE VOCABULARY -->
+      <section id="tab-content-bank" class="hidden space-y-6">
+        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm space-y-6" id="bankExportArea">
+          
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-2 border-slate-100 pb-4">
+            <div>
+              <h2 class="text-2xl font-black text-slate-800" data-i18n="bankTitle">Chinese Question Bank & Dictionary</h2>
+              <p class="text-slate-500 font-bold text-sm" data-i18n="bankSubtitle">Searchable HSK Chinese-Japanese vocabulary, pinyin, and custom items</p>
+            </div>
+            
+            <!-- Excel Import/Export Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="exportBankExcel()" class="btn-green-3d text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-excel"></i>
+                <span data-i18n="exportExcel">Export Excel</span>
+              </button>
+
+              <label class="btn-blue-3d text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5 cursor-pointer">
+                <i class="fa-solid fa-file-import"></i>
+                <span data-i18n="importExcel">Import Excel</span>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importBankExcel(event)">
+              </label>
+
+              <button onclick="openAddQuestionModal()" class="btn-purple-3d text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                <i class="fa-solid fa-plus"></i>
+                <span data-i18n="addQuestion">Add Word</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SEARCH FILTER BAR -->
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="bankSearchInput" oninput="renderQuestionBank()" placeholder="Search Chinese, Pinyin, or Japanese (e.g. 謝謝, xièxie, ありがとう)..." class="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none transition-all">
+          </div>
+
+          <!-- BANK TABLE -->
+          <div class="overflow-x-auto rounded-2xl border-2 border-slate-200">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-wider border-b-2 border-slate-200">
+                  <th class="p-4" data-i18n="colChinese">Chinese (漢字)</th>
+                  <th class="p-4" data-i18n="colPinyin">Pinyin (拼音)</th>
+                  <th class="p-4" data-i18n="colJapanese">Japanese Meaning (日本語)</th>
+                  <th class="p-4 text-center" data-i18n="colAudio">Listen</th>
+                </tr>
+              </thead>
+              <tbody id="bankTableBody" class="divide-y divide-slate-200 font-bold text-sm">
+                <!-- Dynamic Content Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- AUTHENTICATION MODAL (LOGIN / SIGN UP) -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 border-4 border-slate-200 shadow-2xl relative transform transition-all">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-black">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- TAB BUTTONS SIGNIN / SIGNUP -->
+      <div class="flex border-b-2 border-slate-100 mb-6">
+        <button onclick="switchAuthTab('signup')" id="authTabSignUp" class="flex-1 pb-3 text-center font-black text-base border-b-4 border-duoGreen text-duoGreen" data-i18n="btnSignUp">Sign Up</button>
+        <button onclick="switchAuthTab('signin')" id="authTabSignIn" class="flex-1 pb-3 text-center font-black text-base border-b-4 border-transparent text-slate-400" data-i18n="btnSignIn">Sign In</button>
+      </div>
+
+      <!-- SIGN UP FORM -->
+      <form id="signUpForm" onsubmit="handleSignUp(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblRealName">Real Name (無須審核直接通過)</label>
+          <input type="text" id="signUpRealName" required placeholder="e.g. Yamada Taro (山田太郎)" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblEmail">Email Address</label>
+          <input type="email" id="signUpEmail" required placeholder="user@example.com" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblPassword">Password</label>
+          <input type="password" id="signUpPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+        </div>
+        <button type="submit" class="w-full btn-green-3d text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider mt-2" data-i18n="btnCreateAccount">
+          Create Account
+        </button>
+      </form>
+
+      <!-- SIGN IN FORM -->
+      <form id="signInForm" onsubmit="handleSignIn(event)" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblEmail">Email Address</label>
+          <input type="email" id="signInEmail" required placeholder="user@example.com" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblPassword">Password</label>
+          <input type="password" id="signInPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+        </div>
+        <button type="submit" class="w-full btn-blue-3d text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider mt-2" data-i18n="btnSignIn">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ADD QUESTION MODAL -->
+  <div id="addQuestionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-slate-200 shadow-2xl relative">
+      <button onclick="closeAddQuestionModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-black">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-xl font-black text-slate-800 mb-4" data-i18n="modalAddTitle">Add New Vocabulary Item</h3>
+      
+      <form onsubmit="handleAddQuestion(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1">Chinese (漢字)</label>
+          <input type="text" id="addZh" required placeholder="e.g. 早上好" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1">Pinyin (拼音)</label>
+          <input type="text" id="addPy" required placeholder="e.g. zǎoshang hǎo" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-500 mb-1">Japanese Meaning (日本語)</label>
+          <input type="text" id="addJa" required placeholder="e.g. おはようございます" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-sm">
+        </div>
+        <button type="submit" class="w-full btn-purple-3d text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider mt-2" data-i18n="saveBtn">
+          Save Word
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t-2 border-slate-200 py-4 text-center text-xs font-extrabold text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <p>© 2026 日本人學漢語 - Japanese Learn Chinese Gamified Platform</p>
+      <p class="text-slate-500">Powered by Firebase Realtime DB & Web Speech API</p>
+    </div>
+  </footer>
+
+  <!-- MAIN SCRIPT (Firebase Modules + App Logic) -->
+  <script type="module">
+    // Firebase Modular SDK Imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      getDatabase, 
+      ref, 
+      set, 
+      get, 
+      onValue, 
+      push, 
+      update 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // 1. FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyDqGP24Qwf7d7G3R1W7pSlLKI23oRWoL_8",
+      authDomain: "jptoch-733a4.firebaseapp.com",
+      projectId: "jptoch-733a4",
+      storageBucket: "jptoch-733a4.firebasestorage.app",
+      messagingSenderId: "540609740875",
+      appId: "1:540609740875:web:cb90469cf22240a0464dce",
+      measurementId: "G-RTGD4LG27M"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // DEFAULT QUESTION BANK (Japanese Learners studying Chinese)
+    const defaultQuestionBank = [
+      { id: '1', zh: '你好', py: 'nǐ hǎo', ja: 'こんにちは' },
+      { id: '2', zh: '謝謝', py: 'xièxie', ja: 'ありがとう' },
+      { id: '3', zh: '再見', py: 'zàijiàn', ja: 'さようなら' },
+      { id: '4', zh: '對不起', py: 'duìbuqǐ', ja: 'ごめんなさい' },
+      { id: '5', zh: '沒關係', py: 'méi guānxi', ja: '気にしないで / 大丈夫' },
+      { id: '6', zh: '我是日本人', py: 'wǒ shì rìběn rén', ja: '私は日本人です' },
+      { id: '7', zh: '你叫甚麼名字？', py: 'nǐ jiào shénme míngzi?', ja: 'お名前は何ですか？' },
+      { id: '8', zh: '好久不見', py: 'hǎojiǔ bújiàn', ja: 'お久しぶりです' },
+      { id: '9', zh: '好吃的中國菜', py: 'hǎochī de zhōngguó cài', ja: '美味しい中華料理' },
+      { id: '10', zh: '多少錢？', py: 'duōshao qián?', ja: 'いくらですか？' },
+      { id: '11', zh: '在洗手間', py: 'zài xǐshǒujiān', ja: 'お手洗いにいます' },
+      { id: '12', zh: '很高興認識你', py: 'hěn gāoxìng rènshi nǐ', ja: 'お会いできて嬉しいです' },
+      { id: '13', zh: '明天見', py: 'míngtiān jiàn', ja: 'また明日' },
+      { id: '14', zh: '請多關照', py: 'qǐng duō guānzhào', ja: 'よろしくお願いします' },
+      { id: '15', zh: '加油！', py: 'jiāyóu!', ja: '頑張って！' }
+    ];
+
+    // GLOBAL APPLICATION STATE
+    window.state = {
+      lang: 'ja',
+      currentUser: null,
+      userData: {
+        realName: 'Guest Learner',
+        xp: 0,
+        loginStreak: 1,
+        perfectQuizStreak: 0,
+        lastLoginDate: new Date().toISOString().split('T')[0]
+      },
+      questionBank: [...defaultQuestionBank],
+      currentQuiz: [],
+      currentQuizIndex: 0,
+      currentQuizScore: 0,
+      activeBadgeCat: 'login',
+      leaderboardChart: null,
+      speechRecognition: null,
+      isListening: false
+    };
+
+    // I18N DICTIONARY FOR 3 LANGUAGES
+    const i18n = {
+      ja: {
+        lastSaved: "最終保存:",
+        loginBtn: "ログイン / 登録",
+        tabQuiz: "10問ランダム試験",
+        tabBadges: "バッジとストリーク",
+        tabLeaderboard: "ランキングと統計",
+        tabBank: "単語帳・検索",
+        exportTools: "現在のタブを出力",
+        quizBadge: "デイリーチャレンジ",
+        quizTitle: "日本人向け中国語10問テスト",
+        quizSubtitle: "ピンイン・文法・語彙のリアルタイム演習",
+        resetQuiz: "新しい10問",
+        badgeTitle: "実績とバッジ達成",
+        badgeSubtitle: "連続ログイン（1〜1000日）と10問連続全問正解（1〜1000回）",
+        loginStreak: "連続ログイン",
+        quizStreak: "10問全問正解",
+        catLogin: "ログインストリーク (1~1000)",
+        catQuiz: "全問正解ストリーク (1~1000)",
+        leaderboardTitle: "世界プレイヤーランキング",
+        leaderboardSubtitle: "リアルタイムデータベースのスコアランキング",
+        exportExcel: "Excel出力",
+        importExcel: "Excel取り込み",
+        chartTitle: "プレイヤーXPとストリーク分布図",
+        colPlayer: "プレイヤー名",
+        colXP: "獲得XP",
+        colLoginStreak: "ログイン日数",
+        colQuizStreak: "全問正解回数",
+        bankTitle: "中国語単語帳・問題庫",
+        bankSubtitle: "HSK中国語単語・ピンイン・日本語訳",
+        addQuestion: "単語追加",
+        colChinese: "中国語 (漢字)",
+        colPinyin: "ピンイン (拼音)",
+        colJapanese: "日本語訳",
+        colAudio: "音声再生",
+        btnSignUp: "新規登録",
+        btnSignIn: "ログイン",
+        lblRealName: "本名 (審査なし即時承認)",
+        lblEmail: "メールアドレス",
+        lblPassword: "パスワード",
+        btnCreateAccount: "アカウント作成",
+        modalAddTitle: "新しい中国語単語を追加",
+        saveBtn: "単語を保存",
+        speakPrompt: "マイクを押して中国語で発音してください",
+        listening: "音声聞き取り中..."
+      },
+      zh: {
+        lastSaved: "上次儲存日期時間:",
+        loginBtn: "登入 / 註冊帳號",
+        tabQuiz: "隨機10題測驗",
+        tabBadges: "徽章成就系統",
+        tabLeaderboard: "玩家排行與統計",
+        tabBank: "所有題庫與搜尋",
+        exportTools: "匯出當前分頁",
+        quizBadge: "每日挑戰",
+        quizTitle: "日本人學漢語 10題隨機考試",
+        quizSubtitle: "針對日籍學習者的拼音、語法與常用詞彙測驗",
+        resetQuiz: "重新生成10題",
+        badgeTitle: "成就與徽章牆",
+        badgeSubtitle: "追蹤連續登入（1~1000次）與10題連續全勝（1~1000次）",
+        loginStreak: "連續登入天數",
+        quizStreak: "10題完美通關",
+        catLogin: "連續登入徽章 (1~1000)",
+        catQuiz: "完美通關徽章 (1~1000)",
+        leaderboardTitle: "登入玩家排行榜",
+        leaderboardSubtitle: "Firebase Realtime Database 即時連線積分榜",
+        exportExcel: "匯出 EXCEL",
+        importExcel: "匯入 EXCEL",
+        chartTitle: "玩家 XP 與連勝數據分佈圖",
+        colPlayer: "玩家姓名",
+        colXP: "總經驗值 (XP)",
+        colLoginStreak: "連續登入",
+        colQuizStreak: "完美通關",
+        bankTitle: "所有題庫與字典庫",
+        bankSubtitle: "可依關鍵字搜尋漢字、拼音與日文解釋",
+        addQuestion: "新增詞彙",
+        colChinese: "中文 (漢字)",
+        colPinyin: "拼音 (Pinyin)",
+        colJapanese: "日文解釋 (日本語)",
+        colAudio: "發音朗讀",
+        btnSignUp: "註冊新帳號",
+        btnSignIn: "會員登入",
+        lblRealName: "真實姓名 (無須審核直接通過)",
+        lblEmail: "電子郵件帳號",
+        lblPassword: "密碼",
+        btnCreateAccount: "立即建立帳號",
+        modalAddTitle: "新增漢語詞彙題目",
+        saveBtn: "儲存詞彙",
+        speakPrompt: "請點擊麥克風並用中文朗讀",
+        listening: "正在聆聽語音中..."
+      },
+      en: {
+        lastSaved: "Last Saved:",
+        loginBtn: "Login / Sign Up",
+        tabQuiz: "10-Question Quiz",
+        tabBadges: "Badges & Streaks",
+        tabLeaderboard: "Leaderboard & Stats",
+        tabBank: "Question Bank",
+        exportTools: "Export Active Tab",
+        quizBadge: "Daily Challenge",
+        quizTitle: "10-Question Chinese Quiz",
+        quizSubtitle: "Practice Chinese Pinyin, Grammar & Meaning for Japanese Learners",
+        resetQuiz: "New 10 Questions",
+        badgeTitle: "Achievements & Badges",
+        badgeSubtitle: "Track Continuous Logins (1~1000) and Perfect 10-Quiz Streaks (1~1000)",
+        loginStreak: "Login Streak",
+        quizStreak: "Perfect Quizzes",
+        catLogin: "Login Streaks (1~1000)",
+        catQuiz: "Perfect Streaks (1~1000)",
+        leaderboardTitle: "Player Leaderboard",
+        leaderboardSubtitle: "Realtime player rankings & performance stats",
+        exportExcel: "Export Excel",
+        importExcel: "Import Excel",
+        chartTitle: "Player XP & Streak Analytics Distribution",
+        colPlayer: "Player Name",
+        colXP: "Total XP",
+        colLoginStreak: "Login Days",
+        colQuizStreak: "Perfect Quizzes",
+        bankTitle: "Chinese Question Bank",
+        bankSubtitle: "Search Chinese words, Pinyin, and Japanese translations",
+        addQuestion: "Add Vocabulary",
+        colChinese: "Chinese",
+        colPinyin: "Pinyin",
+        colJapanese: "Japanese Meaning",
+        colAudio: "Listen",
+        btnSignUp: "Sign Up",
+        btnSignIn: "Sign In",
+        lblRealName: "Real Name (Instant Pass)",
+        lblEmail: "Email Address",
+        lblPassword: "Password",
+        btnCreateAccount: "Create Account",
+        modalAddTitle: "Add New Chinese Vocabulary",
+        saveBtn: "Save Vocabulary",
+        speakPrompt: "Click microphone and speak Chinese",
+        listening: "Listening to voice..."
+      }
+    };
+
+    // -------------------------------------------------------------
+    // INITIALIZATION & CONNECTION MONITORING
+    // -------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      setupSpeechRecognition();
+      monitorFirebaseConnection();
+      listenAuthChanges();
+      loadQuestionBankFromDB();
+      startNewQuiz();
+      renderBadges();
+      updateUIRender();
+    });
+
+    // Monitor Firebase Connection Status
+    function monitorFirebaseConnection() {
+      const connectedRef = ref(db, ".info/connected");
+      onValue(connectedRef, (snap) => {
+        const dot = document.getElementById("statusDot");
+        const text = document.getElementById("statusText");
+        if (snap.val() === true) {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-duoGreen mr-2 shadow-sm";
+          text.innerText = "Online (Realtime DB)";
+          text.className = "text-duoGreen font-black";
+        } else {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-duoRed mr-2 animate-pulse";
+          text.innerText = "Offline";
+          text.className = "text-duoRed font-black";
+        }
+      });
+    }
+
+    // Timestamp Update Helper
+    function updateSavedTimestamp() {
+      const now = new Date();
+      const timeStr = now.getFullYear() + "-" + 
+        String(now.getMonth()+1).padStart(2, '0') + "-" + 
+        String(now.getDate()).padStart(2, '0') + " " + 
+        String(now.getHours()).padStart(2, '0') + ":" + 
+        String(now.getMinutes()).padStart(2, '0') + ":" + 
+        String(now.getSeconds()).padStart(2, '0');
+      document.getElementById("lastSavedTime").innerText = timeStr;
+    }
+
+    // -------------------------------------------------------------
+    // AUTHENTICATION LOGIC (EMAIL/PASSWORD + REAL NAME)
+    // -------------------------------------------------------------
+    function listenAuthChanges() {
+      onAuthStateChanged(auth, async (user) => {
+        state.currentUser = user;
+        const headerBar = document.getElementById('userHeaderBar');
+        
+        if (user) {
+          // Fetch or Initialize User Data in Realtime DB
+          const userRef = ref(db, `users/${user.uid}`);
+          const snap = await get(userRef);
+          
+          if (snap.exists()) {
+            state.userData = snap.val();
+            checkContinuousLogin();
+          } else {
+            // First time registration initialization
+            state.userData = {
+              uid: user.uid,
+              realName: user.displayName || 'Learner',
+              email: user.email,
+              xp: 0,
+              loginStreak: 1,
+              perfectQuizStreak: 0,
+              lastLoginDate: new Date().toISOString().split('T')[0]
+            };
+            await saveUserDataDB();
+          }
+
+          // Render Logged-in Header UI
+          headerBar.innerHTML = `
+            <div class="flex items-center space-x-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+              <div class="w-8 h-8 bg-duoPurple text-white rounded-xl flex items-center justify-center font-black text-xs shadow-sm">
+                ${state.userData.realName.substring(0, 1)}
+              </div>
+              <div class="text-left hidden sm:block">
+                <p class="text-xs font-black text-slate-800 leading-tight">${state.userData.realName}</p>
+                <p class="text-[10px] font-extrabold text-duoGreen">${state.userData.xp} XP | 🔥 ${state.userData.loginStreak} Days</p>
+              </div>
+              <button onclick="handleSignOut()" class="text-slate-400 hover:text-duoRed px-2 py-1 text-xs">
+                <i class="fa-solid fa-right-from-bracket"></i>
+              </button>
+            </div>
+          `;
+
+          listenLeaderboardDB();
+        } else {
+          // Guest User Mode
+          headerBar.innerHTML = `
+            <button onclick="openAuthModal()" class="btn-green-3d text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider">
+              <i class="fa-solid fa-user-plus mr-1.5"></i> <span>${i18n[state.lang].loginBtn}</span>
+            </button>
+          `;
+          listenLeaderboardDB();
+        }
+      });
+    }
+
+    // Check & Increment Continuous Login Days
+    async function checkContinuousLogin() {
+      const today = new Date().toISOString().split('T')[0];
+      const lastLogin = state.userData.lastLoginDate;
+
+      if (lastLogin !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        if (lastLogin === yesterday) {
+          state.userData.loginStreak = (state.userData.loginStreak || 0) + 1;
+        } else {
+          state.userData.loginStreak = 1; // reset streak if missed
+        }
+        state.userData.lastLoginDate = today;
+        await saveUserDataDB();
+      }
+    }
+
+    // Save User Data to Firebase Realtime Database
+    window.saveUserDataDB = async function() {
+      if (!state.currentUser) return;
+      const uid = state.currentUser.uid;
+      const userRef = ref(db, `users/${uid}`);
+      await set(userRef, state.userData);
+      
+      // Sync to Leaderboard ref
+      const lbRef = ref(db, `leaderboard/${uid}`);
+      await set(lbRef, {
+        realName: state.userData.realName,
+        xp: state.userData.xp || 0,
+        loginStreak: state.userData.loginStreak || 1,
+        perfectQuizStreak: state.userData.perfectQuizStreak || 0
+      });
+
+      updateSavedTimestamp();
+    };
+
+    window.handleSignUp = async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('signUpRealName').value.trim();
+      const email = document.getElementById('signUpEmail').value.trim();
+      const password = document.getElementById('signUpPassword').value.trim();
+
+      try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCred.user, { displayName: name });
+        closeAuthModal();
+      } catch (err) {
+        alert("Sign Up Error: " + err.message);
+      }
+    };
+
+    window.handleSignIn = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('signInEmail').value.trim();
+      const password = document.getElementById('signInPassword').value.trim();
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        closeAuthModal();
+      } catch (err) {
+        alert("Sign In Error: " + err.message);
+      }
+    };
+
+    window.handleSignOut = function() {
+      signOut(auth);
+    };
+
+    // -------------------------------------------------------------
+    // SPEECH SYNTHESIS & RECOGNITION (TTS / STT)
+    // -------------------------------------------------------------
+    window.speakText = function(text, lang = 'zh-CN') {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = 0.85; // Slightly slower for language learners
+        window.speechSynthesis.speak(utterance);
+      }
+    };
+
+    function setupSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        state.speechRecognition = new SpeechRecognition();
+        state.speechRecognition.lang = 'zh-CN';
+        state.speechRecognition.continuous = false;
+        state.speechRecognition.interimResults = false;
+
+        state.speechRecognition.onresult = (event) => {
+          const spoken = event.results[0][0].transcript;
+          handleSpokenAnswer(spoken);
+        };
+
+        state.speechRecognition.onerror = () => {
+          state.isListening = false;
+          updateMicButtonUI();
+        };
+
+        state.speechRecognition.onend = () => {
+          state.isListening = false;
+          updateMicButtonUI();
+        };
+      }
+    }
+
+    window.toggleSpeechListen = function() {
+      if (!state.speechRecognition) {
+        alert("Speech Recognition is not supported on this browser.");
+        return;
+      }
+      if (state.isListening) {
+        state.speechRecognition.stop();
+        state.isListening = false;
+      } else {
+        state.speechRecognition.start();
+        state.isListening = true;
+      }
+      updateMicButtonUI();
+    };
+
+    function updateMicButtonUI() {
+      const btn = document.getElementById('micBtn');
+      const label = document.getElementById('micStatusText');
+      if (!btn) return;
+      if (state.isListening) {
+        btn.className = "w-16 h-16 rounded-full bg-duoRed text-white text-2xl flex items-center justify-center animate-bounce shadow-lg mx-auto";
+        if (label) label.innerText = i18n[state.lang].listening;
+      } else {
+        btn.className = "w-16 h-16 rounded-full bg-duoBlue text-white text-2xl flex items-center justify-center btn-blue-3d mx-auto";
+        if (label) label.innerText = i18n[state.lang].speakPrompt;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PAGE 1: 10-QUESTION QUIZ ENGINE
+    // -------------------------------------------------------------
+    window.startNewQuiz = function() {
+      // Pick 10 random items from bank
+      const shuffled = [...state.questionBank].sort(() => 0.5 - Math.random());
+      state.currentQuiz = shuffled.slice(0, 10);
+      state.currentQuizIndex = 0;
+      state.currentQuizScore = 0;
+      renderCurrentQuizQuestion();
+    };
+
+    function renderCurrentQuizQuestion() {
+      const container = document.getElementById('quizCardContainer');
+      const progress = document.getElementById('quizProgressBar');
+      const progressText = document.getElementById('quizProgressText');
+      const scoreText = document.getElementById('quizScoreText');
+
+      if (state.currentQuizIndex >= state.currentQuiz.length) {
+        // QUIZ COMPLETE
+        progress.style.width = '100%';
+        progressText.innerText = `Question 10 / 10`;
+        finishQuiz();
+        return;
+      }
+
+      const q = state.currentQuiz[state.currentQuizIndex];
+      const pct = (state.currentQuizIndex / 10) * 100;
+      progress.style.width = `${pct}%`;
+      progressText.innerText = `Question ${state.currentQuizIndex + 1} / 10`;
+      scoreText.innerText = `Score: ${state.currentQuizScore} XP`;
+
+      // Alternate question formats: 0: MCQ Choice, 1: Audio/Pronunciation Voice Test
+      const isVoiceTest = state.currentQuizIndex % 2 === 1;
+
+      if (!isVoiceTest) {
+        // Generate options
+        const distractors = state.questionBank
+          .filter(item => item.id !== q.id)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3)
+          .map(item => item.ja);
+        
+        const options = [...distractors, q.ja].sort(() => 0.5 - Math.random());
+
+        container.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-black text-duoBlue uppercase tracking-wider">Select Correct Meaning</span>
+              <button onclick="speakText('${q.zh}')" class="text-duoBlue hover:text-duoBlueDark flex items-center space-x-1.5 font-bold text-sm bg-duoBlue/10 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-volume-high text-lg"></i>
+                <span>Pronounce</span>
+              </button>
+            </div>
+            
+            <h3 class="text-4xl font-black text-slate-800 text-center my-6 tracking-wide">${q.zh}</h3>
+            <p class="text-center font-bold text-slate-400 text-sm mb-6">[ ${q.py} ]</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
+              ${options.map(opt => `
+                <button onclick="checkMCQAnswer('${opt.replace(/'/g, "\\'")}', '${q.ja.replace(/'/g, "\\'")}')" 
+                  class="w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white font-black text-slate-700 hover:border-duoBlue hover:bg-duoBlue/5 transition-all text-sm shadow-sm">
+                  ${opt}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        // Voice Speaking Challenge
+        container.innerHTML = `
+          <div class="text-center my-auto">
+            <span class="text-xs font-black text-duoPurple uppercase tracking-wider mb-2 block">Pronunciation Challenge</span>
+            <h3 class="text-3xl font-black text-slate-800 mb-1">${q.ja}</h3>
+            <p class="text-slate-400 font-bold text-sm mb-6">Target: "${q.zh}" (${q.py})</p>
+
+            <button id="micBtn" onclick="toggleSpeechListen()" class="w-16 h-16 rounded-full bg-duoBlue text-white text-2xl flex items-center justify-center btn-blue-3d mx-auto">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+            <p id="micStatusText" class="text-xs font-extrabold text-slate-500 mt-3">${i18n[state.lang].speakPrompt}</p>
+            <p id="spokenResultText" class="text-sm font-black text-duoPurple mt-2 h-6"></p>
+
+            <div class="mt-6">
+              <button onclick="checkMCQAnswer('${q.ja.replace(/'/g, "\\'")}', '${q.ja.replace(/'/g, "\\'")}')" class="text-xs font-bold text-slate-400 underline hover:text-slate-600">
+                Skip / Mark Correct
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // Auto pronounce Chinese word on load
+      speakText(q.zh);
+    }
+
+    window.checkMCQAnswer = function(selected, correct) {
+      if (selected === correct) {
+        state.currentQuizScore += 10;
+        showFeedback(true);
+      } else {
+        showFeedback(false, correct);
+      }
+    };
+
+    function handleSpokenAnswer(spoken) {
+      const q = state.currentQuiz[state.currentQuizIndex];
+      const resultText = document.getElementById('spokenResultText');
+      if (resultText) resultText.innerText = `You said: "${spoken}"`;
+
+      if (spoken.includes(q.zh) || q.zh.includes(spoken)) {
+        state.currentQuizScore += 10;
+        setTimeout(() => showFeedback(true), 600);
+      } else {
+        setTimeout(() => showFeedback(false, q.zh), 600);
+      }
+    }
+
+    function showFeedback(isCorrect, rightAns = "") {
+      const container = document.getElementById('quizCardContainer');
+      if (isCorrect) {
+        speakText("正確！", "zh-CN");
+        container.innerHTML = `
+          <div class="text-center my-auto space-y-4">
+            <div class="w-20 h-20 bg-duoGreen text-white rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg animate-bounce">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-3xl font-black text-duoGreen">Excellent! (正確)</h3>
+            <p class="text-slate-500 font-bold text-sm">+10 XP Earned!</p>
+            <button onclick="nextQuestion()" class="btn-green-3d text-white font-black px-8 py-3 rounded-2xl text-sm uppercase tracking-wider">
+              Continue
+            </button>
+          </div>
+        `;
+      } else {
+        speakText("再試一次", "zh-CN");
+        container.innerHTML = `
+          <div class="text-center my-auto space-y-4">
+            <div class="w-20 h-20 bg-duoRed text-white rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg">
+              <i class="fa-solid fa-xmark"></i>
+            </div>
+            <h3 class="text-3xl font-black text-duoRed">Incorrect</h3>
+            <p class="text-slate-600 font-bold text-sm">Correct Answer: <span class="text-slate-800 font-black">${rightAns}</span></p>
+            <button onclick="nextQuestion()" class="btn-red-3d bg-duoRed text-white font-black px-8 py-3 rounded-2xl text-sm uppercase tracking-wider">
+              Continue
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    window.nextQuestion = function() {
+      state.currentQuizIndex++;
+      renderCurrentQuizQuestion();
+    };
+
+    async function finishQuiz() {
+      const isPerfect = state.currentQuizScore === 100;
+      state.userData.xp = (state.userData.xp || 0) + state.currentQuizScore;
+      
+      if (isPerfect) {
+        state.userData.perfectQuizStreak = (state.userData.perfectQuizStreak || 0) + 1;
+      }
+
+      await saveUserDataDB();
+      renderBadges();
+
+      const container = document.getElementById('quizCardContainer');
+      container.innerHTML = `
+        <div class="text-center my-auto space-y-4">
+          <div class="w-24 h-24 bg-duoYellow text-slate-900 rounded-3xl flex items-center justify-center text-5xl mx-auto shadow-xl transform rotate-3">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <h3 class="text-3xl font-black text-slate-800">Exam Complete!</h3>
+          <p class="text-slate-600 font-bold text-lg">Final Score: <span class="text-duoGreen font-black text-2xl">${state.currentQuizScore} / 100 XP</span></p>
+          ${isPerfect ? `<p class="text-duoPurple font-black text-sm">🎉 Perfect Score! Streak Milestone +1!</p>` : ''}
+          <div class="pt-2">
+            <button onclick="startNewQuiz()" class="btn-green-3d text-white font-black px-8 py-3.5 rounded-2xl text-sm uppercase tracking-wider">
+              Try Another 10 Questions
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------
+    // PAGE 2: BADGES & ACHIEVEMENTS SYSTEM
+    // -------------------------------------------------------------
+    const loginMilestones = [1, 3, 7, 14, 30, 60, 100, 360, 500, 1000];
+    const quizMilestones = [1, 5, 10, 25, 50, 100, 250, 500, 1000];
+
+    window.switchBadgeCategory = function(cat) {
+      state.activeBadgeCat = cat;
+      const btnLogin = document.getElementById('badge-cat-login');
+      const btnQuiz = document.getElementById('badge-cat-quiz');
+
+      if (cat === 'login') {
+        btnLogin.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-duoYellow text-slate-900 border-b-4 border-duoYellowDark";
+        btnQuiz.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 text-slate-600 border-b-4 border-slate-300";
+      } else {
+        btnQuiz.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-duoPurple text-white border-b-4 border-duoPurpleDark";
+        btnLogin.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 text-slate-600 border-b-4 border-slate-300";
+      }
+      renderBadges();
+    };
+
+    function renderBadges() {
+      const grid = document.getElementById('badgesGrid');
+      const loginCountElem = document.getElementById('badgeLoginDaysCount');
+      const quizCountElem = document.getElementById('badgePerfectQuizCount');
+
+      if (loginCountElem) loginCountElem.innerHTML = `${state.userData.loginStreak || 0} <span class="text-xs font-bold">Days</span>`;
+      if (quizCountElem) quizCountElem.innerHTML = `${state.userData.perfectQuizStreak || 0} <span class="text-xs font-bold">Times</span>`;
+
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      if (state.activeBadgeCat === 'login') {
+        const currentDays = state.userData.loginStreak || 0;
+        loginMilestones.forEach(m => {
+          const unlocked = currentDays >= m;
+          grid.innerHTML += `
+            <div class="badge-card bg-slate-50 border-2 ${unlocked ? 'border-duoYellow bg-duoYellow/10' : 'border-slate-200'} rounded-3xl p-4 text-center flex flex-col justify-between shadow-sm">
+              <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl ${unlocked ? 'bg-duoYellow text-slate-900 shadow-md' : 'bg-slate-200 text-slate-400'}">
+                <i class="fa-solid ${unlocked ? 'fa-fire' : 'fa-lock'}"></i>
+              </div>
+              <div class="mt-3">
+                <h4 class="font-black text-sm text-slate-800">${m} Day Streak</h4>
+                <p class="text-[11px] font-bold ${unlocked ? 'text-duoYellowDark font-black' : 'text-slate-400'} mt-0.5">
+                  ${unlocked ? 'UNLOCKED' : `${currentDays} / ${m} Days`}
+                </p>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        const currentStreaks = state.userData.perfectQuizStreak || 0;
+        quizMilestones.forEach(m => {
+          const unlocked = currentStreaks >= m;
+          grid.innerHTML += `
+            <div class="badge-card bg-slate-50 border-2 ${unlocked ? 'border-duoPurple bg-duoPurple/10' : 'border-slate-200'} rounded-3xl p-4 text-center flex flex-col justify-between shadow-sm">
+              <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl ${unlocked ? 'bg-duoPurple text-white shadow-md' : 'bg-slate-200 text-slate-400'}">
+                <i class="fa-solid ${unlocked ? 'fa-award' : 'fa-lock'}"></i>
+              </div>
+              <div class="mt-3">
+                <h4 class="font-black text-sm text-slate-800">${m} Perfects</h4>
+                <p class="text-[11px] font-bold ${unlocked ? 'text-duoPurple font-black' : 'text-slate-400'} mt-0.5">
+                  ${unlocked ? 'UNLOCKED' : `${currentStreaks} / ${m} Times`}
+                </p>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PAGE 3: PLAYER LEADERBOARD & CHART.JS
+    // -------------------------------------------------------------
+    function listenLeaderboardDB() {
+      const lbRef = ref(db, 'leaderboard');
+      onValue(lbRef, (snap) => {
+        let players = [];
+        if (snap.exists()) {
+          const data = snap.val();
+          players = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          }));
+        } else {
+          // Fallback mock players if database is fresh
+          players = [
+            { realName: 'Yamada Taro (山田太郎)', xp: 450, loginStreak: 12, perfectQuizStreak: 4 },
+            { realName: 'Tanaka Hana (田中花)', xp: 380, loginStreak: 8, perfectQuizStreak: 3 },
+            { realName: 'Sato Ken (佐藤健)', xp: 220, loginStreak: 5, perfectQuizStreak: 1 }
+          ];
+        }
+
+        // Sort by XP descending
+        players.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+        renderLeaderboardTable(players);
+        renderLeaderboardChart(players);
+      });
+    }
+
+    function renderLeaderboardTable(players) {
+      const tbody = document.getElementById('leaderboardTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      players.forEach((p, index) => {
+        const isTop3 = index < 3;
+        const rankColors = ['bg-duoYellow text-slate-900', 'bg-slate-300 text-slate-800', 'bg-amber-600 text-white'];
+        
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-4 text-center">
+              <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl font-black text-xs ${isTop3 ? rankColors[index] : 'bg-slate-100 text-slate-600'}">
+                ${index + 1}
+              </span>
+            </td>
+            <td class="p-4 font-black text-slate-800 flex items-center space-x-2">
+              <i class="fa-solid fa-circle-user text-slate-400 text-lg"></i>
+              <span>${p.realName || 'Learner'}</span>
+            </td>
+            <td class="p-4 text-center font-black text-duoGreen">${p.xp || 0} XP</td>
+            <td class="p-4 text-center font-extrabold text-duoYellowDark">🔥 ${p.loginStreak || 1} Days</td>
+            <td class="p-4 text-center font-extrabold text-duoPurple">🏆 ${p.perfectQuizStreak || 0} Times</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderLeaderboardChart(players) {
+      const ctx = document.getElementById('leaderboardChart')?.getContext('2d');
+      if (!ctx) return;
+
+      const labels = players.slice(0, 8).map(p => p.realName || 'Player');
+      const xpData = players.slice(0, 8).map(p => p.xp || 0);
+      const streakData = players.slice(0, 8).map(p => p.loginStreak || 1);
+
+      if (state.leaderboardChart) {
+        state.leaderboardChart.destroy();
+      }
+
+      state.leaderboardChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Total XP',
+              data: xpData,
+              backgroundColor: '#58cc02',
+              borderRadius: 8
+            },
+            {
+              label: 'Login Streak (Days)',
+              data: streakData,
+              backgroundColor: '#ffc800',
+              borderRadius: 8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { font: { family: 'Nunito', weight: 'bold' } } }
+          },
+          scales: {
+            x: { ticks: { font: { family: 'Nunito', weight: 'bold' } } },
+            y: { ticks: { font: { family: 'Nunito', weight: 'bold' } } }
+          }
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // PAGE 4: QUESTION BANK & SEARCHABLE VOCABULARY
+    // -------------------------------------------------------------
+    function loadQuestionBankFromDB() {
+      const bankRef = ref(db, 'questionBank');
+      onValue(bankRef, (snap) => {
+        if (snap.exists()) {
+          const val = snap.val();
+          state.questionBank = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+        } else {
+          state.questionBank = [...defaultQuestionBank];
+        }
+        renderQuestionBank();
+      });
+    }
+
+    window.renderQuestionBank = function() {
+      const tbody = document.getElementById('bankTableBody');
+      const query = document.getElementById('bankSearchInput')?.value.toLowerCase().trim() || '';
+      if (!tbody) return;
+
+      const filtered = state.questionBank.filter(item => 
+        item.zh.toLowerCase().includes(query) ||
+        item.py.toLowerCase().includes(query) ||
+        item.ja.toLowerCase().includes(query)
+      );
+
+      tbody.innerHTML = '';
+      filtered.forEach(item => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-4 font-black text-slate-800 text-base">${item.zh}</td>
+            <td class="p-4 font-bold text-slate-500">${item.py}</td>
+            <td class="p-4 font-bold text-slate-700">${item.ja}</td>
+            <td class="p-4 text-center">
+              <button onclick="speakText('${item.zh}')" class="w-9 h-9 rounded-xl bg-duoBlue/10 text-duoBlue hover:bg-duoBlue hover:text-white flex items-center justify-center mx-auto transition-all">
+                <i class="fa-solid fa-volume-high"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    };
+
+    window.handleAddQuestion = async function(e) {
+      e.preventDefault();
+      const zh = document.getElementById('addZh').value.trim();
+      const py = document.getElementById('addPy').value.trim();
+      const ja = document.getElementById('addJa').value.trim();
+
+      const bankRef = ref(db, 'questionBank');
+      await push(bankRef, { zh, py, ja });
+
+      updateSavedTimestamp();
+      closeAddQuestionModal();
+    };
+
+    // EXCEL IMPORT FUNCTION
+    window.importBankExcel = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+
+        const bankRef = ref(db, 'questionBank');
+        for (let row of json) {
+          if (row.zh || row.Chinese) {
+            await push(bankRef, {
+              zh: row.zh || row.Chinese || '',
+              py: row.py || row.Pinyin || '',
+              ja: row.ja || row.Japanese || ''
+            });
+          }
+        }
+        updateSavedTimestamp();
+        alert("Excel Question Bank Imported Successfully!");
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
+    // -------------------------------------------------------------
+    // EXPORT TOOLS (EXCEL, PNG, PDF)
+    // -------------------------------------------------------------
+    window.exportLeaderboardExcel = function() {
+      const data = state.questionBank.map(item => ({
+        "Chinese (漢字)": item.zh,
+        "Pinyin (拼音)": item.py,
+        "Japanese (日本語)": item.ja
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Question Bank");
+      XLSX.writeFile(wb, "Japanese_Learn_Chinese_Bank.xlsx");
+    };
+
+    window.exportBankExcel = function() {
+      exportLeaderboardExcel();
+    };
+
+    window.exportCurrentTabPNG = function() {
+      const activeTab = document.querySelector('main > section:not(.hidden)');
+      if (!activeTab) return;
+
+      html2canvas(activeTab, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Duolingo_Learn_Chinese_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    };
+
+    window.exportCurrentTabPDF = function() {
+      const activeTab = document.querySelector('main > section:not(.hidden)');
+      if (!activeTab) return;
+
+      const { jsPDF } = window.jspdf;
+      html2canvas(activeTab, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210;
+        const pageHeight = 295;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`Duolingo_Learn_Chinese_${Date.now()}.pdf`);
+      });
+    };
+
+    // -------------------------------------------------------------
+    // NAVIGATION & UI SWITCHING
+    // -------------------------------------------------------------
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100";
+      });
+
+      const activeSec = document.getElementById(`tab-content-${tabName}`);
+      const activeNav = document.getElementById(`nav-${tabName}`);
+
+      if (activeSec) activeSec.classList.remove('hidden');
+      if (activeNav) {
+        activeNav.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all bg-duoGreen text-white shadow-sm";
+      }
+    };
+
+    window.setLanguage = function(lang) {
+      state.lang = lang;
+      ['ja', 'zh', 'en'].forEach(l => {
+        const b = document.getElementById(`lang-${l}`);
+        if (b) {
+          if (l === lang) {
+            b.className = "px-2.5 py-1 text-xs font-black rounded-lg transition-all bg-white text-duoGreen shadow-sm";
+          } else {
+            b.className = "px-2.5 py-1 text-xs font-black rounded-lg transition-all text-slate-600 hover:text-slate-900";
+          }
+        }
+      });
+      updateUIRender();
+    };
+
+    function updateUIRender() {
+      document.querySelectorAll('[data-i18n]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        if (i18n[state.lang] && i18n[state.lang][key]) {
+          elem.innerText = i18n[state.lang][key];
+        }
+      });
+      renderBadges();
+      renderQuestionBank();
+    }
+
+    // MODAL TOGGLES
+    window.openAuthModal = () => document.getElementById('authModal').classList.remove('hidden');
+    window.closeAuthModal = () => document.getElementById('authModal').classList.add('hidden');
+    window.openAddQuestionModal = () => document.getElementById('addQuestionModal').classList.remove('hidden');
+    window.closeAddQuestionModal = () => document.getElementById('addQuestionModal').classList.add('hidden');
+
+    window.switchAuthTab = (type) => {
+      const signupForm = document.getElementById('signUpForm');
+      const signinForm = document.getElementById('signInForm');
+      const tabSignUp = document.getElementById('authTabSignUp');
+      const tabSignIn = document.getElementById('authTabSignIn');
+
+      if (type === 'signup') {
+        signupForm.classList.remove('hidden');
+        signinForm.classList.add('hidden');
+        tabSignUp.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-duoGreen text-duoGreen";
+        tabSignIn.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-transparent text-slate-400";
+      } else {
+        signinForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+        tabSignIn.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-duoBlue text-duoBlue";
+        tabSignUp.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-transparent text-slate-400";
+      }
+    };
+  </script>
+</body>
+</html>
