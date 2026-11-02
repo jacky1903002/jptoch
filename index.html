@@ -368,16 +368,27 @@
           </div>
 
           <!-- SEARCH FILTER BAR -->
-          <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="bankSearchInput" oninput="renderQuestionBank()" placeholder="搜尋中文漢字、拼音或日文 (例如：謝謝, xièxie, ありがとう)..." class="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none transition-all">
+          <div class="flex flex-col md:flex-row gap-3">
+            <div class="relative flex-grow">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+              <input type="text" id="bankSearchInput" oninput="handleSearchInput()" placeholder="搜尋中文漢字、拼音或日文 (例如：謝謝, xièxie, ありがとう)..." class="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none transition-all">
+            </div>
+
+            <!-- JUMP TO RANGE / PAGE SELECTOR -->
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-black text-slate-500 whitespace-nowrap">快速翻頁:</span>
+              <select id="bankPageSelect" onchange="handlePageSelectChange(event)" class="py-3 px-4 rounded-2xl border-2 border-slate-200 font-extrabold text-sm text-slate-700 bg-white focus:border-duoBlue focus:outline-none cursor-pointer">
+                <option value="0">第 1 - 100 題</option>
+              </select>
+            </div>
           </div>
 
-          <!-- BANK TABLE -->
-          <div class="overflow-x-auto rounded-2xl border-2 border-slate-200">
+          <!-- BANK TABLE WITH INFINITE SCROLL CONTAINER -->
+          <div id="bankTableScrollContainer" onscroll="handleBankScroll(event)" class="overflow-y-auto max-h-[600px] rounded-2xl border-2 border-slate-200 relative">
             <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-wider border-b-2 border-slate-200">
+              <thead class="sticky top-0 bg-slate-100 z-10 shadow-sm">
+                <tr class="text-slate-600 font-black text-xs uppercase tracking-wider border-b-2 border-slate-200">
+                  <th class="p-4 w-16 text-center">編號</th>
                   <th class="p-4" data-i18n="colChinese">中文 (漢字)</th>
                   <th class="p-4" data-i18n="colPinyin">拼音 (Pinyin)</th>
                   <th class="p-4" data-i18n="colJapanese">日文解釋 (日本語)</th>
@@ -385,10 +396,14 @@
                   <th class="p-4 text-center">操作</th>
                 </tr>
               </thead>
-              <tbody id="bankTableBody" class="divide-y divide-slate-200 font-bold text-sm">
+              <tbody id="bankTableBody" class="divide-y divide-slate-200 font-bold text-sm bg-white">
                 <!-- Dynamic Content Injected via JS -->
               </tbody>
             </table>
+            <!-- Scroll Indicator / Load More Banner -->
+            <div id="bankLoadMoreBanner" class="p-3 text-center bg-slate-50 border-t border-slate-200 text-xs font-black text-slate-400">
+              向下滾動載入更多題目...
+            </div>
           </div>
 
         </div>
@@ -595,6 +610,9 @@
         lastLoginDate: new Date().toISOString().split('T')[0]
       },
       questionBank: [...jatochDefaultPreset],
+      filteredBank: [],
+      displayLimit: 50,
+      batchSize: 50,
       currentQuiz: [],
       currentQuizIndex: 0,
       currentQuizScore: 0,
@@ -744,148 +762,134 @@
     };
 
     // -------------------------------------------------------------
-    // INITIALIZATION & CONNECTION MONITORING
+    // jatoch.json SPECIFIC DATABASE MANAGEMENT & INFINITE SCROLL
     // -------------------------------------------------------------
-    window.addEventListener('DOMContentLoaded', () => {
-      setupSpeechRecognition();
-      monitorFirebaseConnection();
-      listenAuthChanges();
-      loadQuestionBankFromDB();
-      startNewQuiz();
-      renderBadges();
-      updateUIRender();
-    });
-
-    // Monitor Firebase Connection Status
-    function monitorFirebaseConnection() {
-      const connectedRef = ref(db, ".info/connected");
-      onValue(connectedRef, (snap) => {
-        const dot = document.getElementById("statusDot");
-        const text = document.getElementById("statusText");
-        if (snap.val() === true) {
-          dot.className = "w-2.5 h-2.5 rounded-full bg-duoGreen mr-2 shadow-sm";
-          text.innerText = "🟢 連線正常 (Firebase)";
-          text.className = "text-duoGreen font-black";
+    function loadQuestionBankFromDB() {
+      const bankRef = ref(db, 'questionBank');
+      onValue(bankRef, (snap) => {
+        if (snap.exists()) {
+          const val = snap.val();
+          state.questionBank = Object.keys(val).map((key, idx) => ({ id: key, indexNum: idx + 1, ...val[key] }));
         } else {
-          dot.className = "w-2.5 h-2.5 rounded-full bg-duoRed mr-2 animate-pulse";
-          text.innerText = "🔴 離線 / 斷線";
-          text.className = "text-duoRed font-black";
+          // If database is empty, seed defaults
+          seedJatochDefaultDB();
         }
-      });
-    }
-
-    // Timestamp Update Helper
-    function updateSavedTimestamp() {
-      const now = new Date();
-      const timeStr = now.getFullYear() + "-" + 
-        String(now.getMonth()+1).padStart(2, '0') + "-" + 
-        String(now.getDate()).padStart(2, '0') + " " + 
-        String(now.getHours()).padStart(2, '0') + ":" + 
-        String(now.getMinutes()).padStart(2, '0') + ":" + 
-        String(now.getSeconds()).padStart(2, '0');
-      document.getElementById("lastSavedTime").innerText = timeStr;
-    }
-
-    // -------------------------------------------------------------
-    // AUTHENTICATION LOGIC (REALTIME DATABASE + REAL NAME)
-    // -------------------------------------------------------------
-    function listenAuthChanges() {
-      onAuthStateChanged(auth, async (user) => {
-        state.currentUser = user;
-        const headerBar = document.getElementById('userHeaderBar');
+        const countDisplay = document.getElementById('jatochCountDisplay');
+        if (countDisplay) countDisplay.innerText = state.questionBank.length;
         
-        if (user) {
-          const userRef = ref(db, `users/${user.uid}`);
-          const snap = await get(userRef);
-          
-          if (snap.exists()) {
-            state.userData = snap.val();
-            checkContinuousLogin();
-          } else {
-            state.userData = {
-              uid: user.uid,
-              realName: user.displayName || 'Learner',
-              email: user.email,
-              xp: 0,
-              loginStreak: 1,
-              perfectQuizStreak: 0,
-              lastLoginDate: new Date().toISOString().split('T')[0]
-            };
-            await saveUserDataDB();
-          }
-
-          headerBar.innerHTML = `
-            <div class="flex items-center space-x-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-              <div class="w-8 h-8 bg-duoPurple text-white rounded-xl flex items-center justify-center font-black text-xs shadow-sm">
-                ${(state.userData.realName || 'U').substring(0, 1)}
-              </div>
-              <div class="text-left hidden sm:block">
-                <p class="text-xs font-black text-slate-800 leading-tight">${state.userData.realName}</p>
-                <p class="text-[10px] font-extrabold text-duoGreen">${state.userData.xp} XP | 🔥 ${state.userData.loginStreak} Days</p>
-              </div>
-              <button onclick="handleSignOut()" class="text-slate-400 hover:text-duoRed px-2 py-1 text-xs">
-                <i class="fa-solid fa-right-from-bracket"></i>
-              </button>
-            </div>
-          `;
-
-          listenLeaderboardDB();
-        } else {
-          headerBar.innerHTML = `
-            <button onclick="openAuthModal()" class="btn-green-3d text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider">
-              <i class="fa-solid fa-user-plus mr-1.5"></i> <span>${i18n[state.lang].loginBtn}</span>
-            </button>
-          `;
-          listenLeaderboardDB();
-        }
+        updatePageSelectOptions();
+        filterQuestionBank();
       });
     }
 
-    async function checkContinuousLogin() {
-      const today = new Date().toISOString().split('T')[0];
-      const lastLogin = state.userData.lastLoginDate;
+    function updatePageSelectOptions() {
+      const select = document.getElementById('bankPageSelect');
+      if (!select) return;
+      select.innerHTML = '';
+      
+      const total = state.filteredBank.length > 0 ? state.filteredBank.length : state.questionBank.length;
+      const pageSize = 100;
+      const pages = Math.ceil(total / pageSize) || 1;
 
-      if (lastLogin !== today) {
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-        if (lastLogin === yesterday) {
-          state.userData.loginStreak = (state.userData.loginStreak || 0) + 1;
-        } else {
-          state.userData.loginStreak = 1;
-        }
-        state.userData.lastLoginDate = today;
-        await saveUserDataDB();
+      for (let i = 0; i < pages; i++) {
+        const start = i * pageSize + 1;
+        const end = Math.min((i + 1) * pageSize, total);
+        const opt = document.createElement('option');
+        opt.value = i * pageSize;
+        opt.innerText = `第 ${start} - ${end} 題`;
+        select.appendChild(opt);
       }
     }
 
-    window.saveUserDataDB = async function() {
-      if (!state.currentUser) return;
-      const uid = state.currentUser.uid;
-      const userRef = ref(db, `users/${uid}`);
-      await set(userRef, state.userData);
-      
-      const lbRef = ref(db, `leaderboard/${uid}`);
-      await set(lbRef, {
-        realName: state.userData.realName,
-        xp: state.userData.xp || 0,
-        loginStreak: state.userData.loginStreak || 1,
-        perfectQuizStreak: state.userData.perfectQuizStreak || 0
-      });
-
-      updateSavedTimestamp();
+    window.handleSearchInput = function() {
+      state.displayLimit = state.batchSize;
+      filterQuestionBank();
+      updatePageSelectOptions();
     };
 
-    window.handleSignUp = async function(e) {
-      e.preventDefault();
-      const name = document.getElementById('signUpRealName').value.trim();
-      const email = document.getElementById('signUpEmail').value.trim();
-      const password = document.getElementById('signUpPassword').value.trim();
+    window.handlePageSelectChange = function(e) {
+      const startIndex = parseInt(e.target.value, 10);
+      state.displayLimit = startIndex + state.batchSize;
+      renderQuestionBank(startIndex);
+      
+      const container = document.getElementById('bankTableScrollContainer');
+      if (container) container.scrollTop = 0;
+    };
 
-      try {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCred.user, { displayName: name });
-        closeAuthModal();
-      } catch (err) {
-        alert("註冊失敗: " + err.message);
+    function filterQuestionBank() {
+      const query = document.getElementById('bankSearchInput')?.value.toLowerCase().trim() || '';
+      if (!query) {
+        state.filteredBank = [...state.questionBank];
+      } else {
+        state.filteredBank = state.questionBank.filter(item => 
+          (item.zh && item.zh.toLowerCase().includes(query)) ||
+          (item.py && item.py.toLowerCase().includes(query)) ||
+          (item.ja && item.ja.toLowerCase().includes(query)) ||
+          (item.indexNum && String(item.indexNum).includes(query))
+        );
+      }
+      renderQuestionBank(0);
+    }
+
+    window.handleBankScroll = function(event) {
+      const el = event.target;
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) {
+        if (state.displayLimit < state.filteredBank.length) {
+          state.displayLimit += state.batchSize;
+          renderQuestionBank(null, true);
+        }
+      }
+    };
+
+    window.renderQuestionBank = function(startIndexOverride = null, isAppendMode = false) {
+      const tbody = document.getElementById('bankTableBody');
+      const loadBanner = document.getElementById('bankLoadMoreBanner');
+      if (!tbody) return;
+
+      const startIndex = startIndexOverride !== null ? startIndexOverride : 0;
+      const itemsToRender = state.filteredBank.slice(startIndex, state.displayLimit);
+
+      if (!isAppendMode) {
+        tbody.innerHTML = '';
+      }
+
+      if (itemsToRender.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-bold">查無相符的題目數據</td></tr>`;
+        if (loadBanner) loadBanner.innerText = "已載入完畢";
+        return;
+      }
+
+      const rowsHTML = itemsToRender.map((item, idx) => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-4 text-center font-extrabold text-xs text-slate-400">${item.indexNum || (startIndex + idx + 1)}</td>
+          <td class="p-4 font-black text-slate-800 text-base">${item.zh}</td>
+          <td class="p-4 font-bold text-slate-500">${item.py || ''}</td>
+          <td class="p-4 font-bold text-slate-700">${item.ja}</td>
+          <td class="p-4 text-center">
+            <button onclick="speakText('${item.zh.replace(/'/g, "\\'")}')" class="w-9 h-9 rounded-xl bg-duoBlue/10 text-duoBlue hover:bg-duoBlue hover:text-white flex items-center justify-center mx-auto transition-all">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </td>
+          <td class="p-4 text-center">
+            <button onclick="deleteQuestionItem('${item.id}')" class="text-slate-400 hover:text-duoRed text-sm">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      if (isAppendMode) {
+        tbody.innerHTML += rowsHTML;
+      } else {
+        tbody.innerHTML = rowsHTML;
+      }
+
+      if (loadBanner) {
+        if (state.displayLimit >= state.filteredBank.length) {
+          loadBanner.innerText = `已顯示全部 ${state.filteredBank.length} 筆題目`;
+        } else {
+          loadBanner.innerText = `已載入 ${Math.min(state.displayLimit, state.filteredBank.length)} / ${state.filteredBank.length} 筆 (向下滾動載入更多)...`;
+        }
       }
     };
 
