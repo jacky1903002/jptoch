@@ -1,1525 +1,1002 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>日本人學漢語 - Duolingo Style Chinese Learning & jatoch.json Database</title>
+  <title>日本人學漢語 - Duolingo Style Chinese Learning</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Google Fonts: Nunito & Noto Sans JP/TC -->
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  
-  <!-- External Libraries: Chart.js, SheetJS XLSX, html2canvas, jsPDF -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- html2canvas (PNG export) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Nunito', 'Noto Sans JP', 'sans-serif'],
-          },
-          colors: {
-            duoGreen: '#58cc02',
-            duoGreenDark: '#46a302',
-            duoBlue: '#1cb0f6',
-            duoBlueDark: '#1899d6',
-            duoYellow: '#ffc800',
-            duoYellowDark: '#e5b200',
-            duoPurple: '#ce82ff',
-            duoPurpleDark: '#b061e0',
-            duoRed: '#ff4b4b',
-            duoRedDark: '#ea2b2b',
-            duoGray: '#e5e5e5',
-            duoGrayDark: '#afafaf'
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
-    body {
-      font-family: 'Nunito', 'Noto Sans JP', sans-serif;
-      background-color: #f7f9fa;
-    }
     .btn-3d {
+      box-shadow: 0 4px 0 #46a302;
       transition: all 0.1s ease;
-      box-shadow: 0 4px 0 0 rgba(0,0,0,0.2);
     }
     .btn-3d:active {
       transform: translateY(4px);
-      box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
+      box-shadow: 0 0 0 #46a302;
     }
-    .btn-green-3d {
-      background-color: #58cc02;
-      box-shadow: 0 4px 0 0 #46a302;
+    .btn-3d-blue {
+      box-shadow: 0 4px 0 #1d4ed8;
+      transition: all 0.1s ease;
     }
-    .btn-green-3d:active {
+    .btn-3d-blue:active {
       transform: translateY(4px);
-      box-shadow: 0 0 0 0 #46a302;
+      box-shadow: 0 0 0 #1d4ed8;
     }
-    .btn-blue-3d {
-      background-color: #1cb0f6;
-      box-shadow: 0 4px 0 0 #1899d6;
-    }
-    .btn-blue-3d:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 0 #1899d6;
-    }
-    .btn-purple-3d {
-      background-color: #ce82ff;
-      box-shadow: 0 4px 0 0 #b061e0;
-    }
-    .btn-purple-3d:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 0 #b061e0;
-    }
-    .btn-yellow-3d {
-      background-color: #ffc800;
-      box-shadow: 0 4px 0 0 #e5b200;
-      color: #4b4b4b;
-    }
-    .btn-yellow-3d:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 0 #e5b200;
-    }
-    .badge-card {
-      transition: transform 0.2s;
-    }
-    .badge-card:hover {
-      transform: scale(1.03);
+    .duo-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 1rem;
+      box-shadow: 0 4px 0 #cbd5e1;
     }
   </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+<body class="bg-slate-100 font-sans min-h-screen pb-16">
 
-  <!-- TOP HEADER / NAV BAR -->
-  <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-40 px-4 py-3 shadow-sm">
-    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
-      
-      <!-- LOGO & TITLE -->
+  <!-- 頂部導航與狀態列 -->
+  <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-50 px-4 py-3 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-3">
       <div class="flex items-center space-x-3">
-        <div class="w-11 h-11 bg-duoGreen rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-md transform -rotate-3">
-          漢
+        <div class="bg-green-500 text-white font-black px-3 py-1.5 rounded-xl shadow border-b-4 border-green-700 text-lg flex items-center gap-2">
+          <i class="fa-solid fa-graduation-cap"></i> <span id="navTitle">日本人學漢語</span>
         </div>
-        <div>
-          <h1 class="text-xl font-black text-slate-800 tracking-tight leading-none">日本人學漢語</h1>
-          <p class="text-xs font-bold text-duoGreen">Chinese for Japanese Learners (jatoch.json DB)</p>
-        </div>
+        <!-- 連線狀況 -->
+        <span id="connStatus" class="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full border border-green-300 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Firebase 連線中
+        </span>
+        <!-- 上次儲存時間 -->
+        <span id="lastSavedTime" class="text-xs text-slate-400 hidden sm:inline">上次儲存: 尚未同步</span>
       </div>
 
-      <!-- STATUS & TIMESTAMP -->
-      <div class="flex items-center space-x-3 text-xs font-bold">
-        <!-- Connection Status Badge -->
-        <div id="connectionStatus" class="flex items-center px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-          <span class="w-2.5 h-2.5 rounded-full bg-slate-400 mr-2 animate-pulse" id="statusDot"></span>
-          <span id="statusText">Connecting...</span>
+      <div class="flex items-center gap-3">
+        <!-- 語言切換 -->
+        <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <button onclick="setLanguage('zh')" id="langZh" class="px-3 py-1 text-xs font-bold rounded-lg bg-white text-green-600 shadow-sm">繁中</button>
+          <button onclick="setLanguage('ja')" id="langJa" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-600">日本語</button>
+          <button onclick="setLanguage('en')" id="langEn" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-600">English</button>
         </div>
-
-        <!-- Last Saved Display -->
-        <div class="hidden sm:flex items-center text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-          <i class="fa-solid fa-cloud-arrow-up mr-2 text-duoBlue"></i>
-          <span data-i18n="lastSaved">上次儲存時間:</span>
-          <span id="lastSavedTime" class="ml-1 text-slate-700 font-extrabold">--:--:--</span>
+        <!-- 使用者資訊區 -->
+        <div id="userInfoSection" class="hidden items-center gap-2">
+          <span id="userNameDisplay" class="text-sm font-bold text-slate-700"></span>
+          <button onclick="logoutUser()" class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100">登出</button>
         </div>
       </div>
-
-      <!-- LANGUAGE TOGGLE & USER PROFILE BUTTON -->
-      <div class="flex items-center space-x-2">
-        <!-- Multi-language Select Buttons -->
-        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-          <button onclick="setLanguage('ja')" id="lang-ja" class="px-2.5 py-1 text-xs font-black rounded-lg transition-all bg-white text-duoGreen shadow-sm">日</button>
-          <button onclick="setLanguage('zh')" id="lang-zh" class="px-2.5 py-1 text-xs font-black rounded-lg transition-all text-slate-600 hover:text-slate-900">繁</button>
-          <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 text-xs font-black rounded-lg transition-all text-slate-600 hover:text-slate-900">EN</button>
-        </div>
-
-        <!-- User Stats / Auth Trigger -->
-        <div id="userHeaderBar" class="flex items-center space-x-2">
-          <button onclick="openAuthModal()" class="btn-green-3d text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider">
-            <i class="fa-solid fa-user-plus mr-1.5"></i> <span data-i18n="loginBtn">登入 / 註冊</span>
-          </button>
-        </div>
-      </div>
-
     </div>
   </header>
 
-  <!-- MAIN WRAPPER WITH SIDEBAR NAVIGATION -->
-  <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col md:flex-row gap-6 p-4 md:p-6">
-    
-    <!-- SIDEBAR NAV -->
-    <aside class="w-full md:w-64 flex-shrink-0">
-      <nav class="bg-white rounded-3xl p-3 border-2 border-slate-200 shadow-sm sticky top-24 space-y-2">
-        
-        <button onclick="switchTab('quiz')" id="nav-quiz" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all bg-duoGreen text-white shadow-sm">
-          <i class="fa-solid fa-gamepad text-lg w-6"></i>
-          <span data-i18n="tabQuiz">10題隨機測驗</span>
-        </button>
+  <!-- 主內容區 -->
+  <main class="max-w-6xl mx-auto px-4 mt-6">
 
-        <button onclick="switchTab('badges')" id="nav-badges" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100">
-          <i class="fa-solid fa-award text-lg w-6 text-duoYellowDark"></i>
-          <span data-i18n="tabBadges">成就與徽章</span>
-        </button>
-
-        <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100">
-          <i class="fa-solid fa-ranking-star text-lg w-6 text-duoBlue"></i>
-          <span data-i18n="tabLeaderboard">排行榜與統計</span>
-        </button>
-
-        <button onclick="switchTab('bank')" id="nav-bank" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100">
-          <i class="fa-solid fa-book-bookmark text-lg w-6 text-duoPurple"></i>
-          <span data-i18n="tabBank">題庫與 JSON</span>
-        </button>
-
-        <hr class="border-slate-200 my-2">
-
-        <!-- jatoch.json Database Management Trigger -->
-        <button onclick="openJatochModal()" class="w-full btn-yellow-3d font-black px-3 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2">
-          <i class="fa-solid fa-database"></i>
-          <span>jatoch.json 數據庫</span>
-        </button>
-
-        <!-- Global Export Bar inside Sidebar -->
-        <div class="p-2 space-y-2">
-          <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider px-2" data-i18n="exportTools">匯出當前分頁</p>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="exportCurrentTabPNG()" class="flex items-center justify-center space-x-1 py-2 px-3 rounded-xl border-2 border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs">
-              <i class="fa-solid fa-file-image text-duoGreen"></i>
-              <span>高畫質 PNG</span>
-            </button>
-            <button onclick="exportCurrentTabPDF()" class="flex items-center justify-center space-x-1 py-2 px-3 rounded-xl border-2 border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs">
-              <i class="fa-solid fa-file-pdf text-duoRed"></i>
-              <span>PDF 報表</span>
-            </button>
-          </div>
-        </div>
-
-      </nav>
-    </aside>
-
-    <!-- TAB CONTENTS -->
-    <main class="flex-grow w-full max-w-full overflow-hidden">
-      
-      <!-- PAGE 1: 10-QUESTION QUIZ ENGINE -->
-      <section id="tab-content-quiz" class="space-y-6">
-        
-        <!-- Quiz Banner & Progress -->
-        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden" id="quizExportArea">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <span class="bg-duoGreen/10 text-duoGreen font-black px-3 py-1 rounded-full text-xs uppercase tracking-wider" data-i18n="quizBadge">每日挑戰</span>
-              <h2 class="text-2xl font-black text-slate-800 mt-1" data-i18n="quizTitle">日本人學漢語 10題隨機測驗</h2>
-              <p class="text-slate-500 font-bold text-sm" data-i18n="quizSubtitle">學習漢語拼音、文法與日文解釋對照練習</p>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-              <button onclick="startNewQuiz()" class="btn-blue-3d text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs uppercase tracking-wider flex items-center space-x-2">
-                <i class="fa-solid fa-rotate-right"></i>
-                <span data-i18n="resetQuiz">重新生成 10 題</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="w-full bg-slate-100 h-5 rounded-full p-1 border border-slate-200 mb-2">
-            <div id="quizProgressBar" class="bg-duoGreen h-full rounded-full transition-all duration-300 w-0"></div>
-          </div>
-          <div class="flex justify-between text-xs font-black text-slate-400 px-1">
-            <span id="quizProgressText">第 0 / 10 題</span>
-            <span id="quizScoreText">目前得分: 0 XP</span>
-          </div>
-
-          <!-- QUIZ CONTAINER CARD -->
-          <div id="quizCardContainer" class="mt-6 bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 md:p-8 min-h-[360px] flex flex-col justify-between">
-            <!-- Dynamic Content Injected via JS -->
-          </div>
-        </div>
-
-      </section>
-
-      <!-- PAGE 2: BADGES & ACHIEVEMENTS SYSTEM -->
-      <section id="tab-content-badges" class="hidden space-y-6">
-        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm" id="badgesExportArea">
-          
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b-2 border-slate-100 pb-4">
-            <div>
-              <h2 class="text-2xl font-black text-slate-800" data-i18n="badgeTitle">成就與徽章系統 (1~1000次)</h2>
-              <p class="text-slate-500 font-bold text-sm" data-i18n="badgeSubtitle">追蹤連續登入天數 (1~1000天) 與 10題測驗連續全對次數 (1~1000次)</p>
-            </div>
-            
-            <!-- Quick Stat Summary -->
-            <div class="flex space-x-3">
-              <div class="bg-duoYellow/10 border border-duoYellow/30 px-4 py-2 rounded-2xl text-center">
-                <p class="text-xs font-extrabold text-duoYellowDark uppercase" data-i18n="loginStreak">連續登入</p>
-                <p class="text-xl font-black text-slate-800" id="badgeLoginDaysCount">0 <span class="text-xs font-bold">天</span></p>
-              </div>
-              <div class="bg-duoPurple/10 border border-duoPurple/30 px-4 py-2 rounded-2xl text-center">
-                <p class="text-xs font-extrabold text-duoPurpleDark uppercase" data-i18n="quizStreak">10題完美全勝</p>
-                <p class="text-xl font-black text-slate-800" id="badgePerfectQuizCount">0 <span class="text-xs font-bold">次</span></p>
-              </div>
-            </div>
-          </div>
-
-          <!-- SUB-TABS FOR BADGES -->
-          <div class="mb-6 flex space-x-3">
-            <button onclick="switchBadgeCategory('login')" id="badge-cat-login" class="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-duoYellow text-slate-900 border-b-4 border-duoYellowDark">
-              <i class="fa-solid fa-calendar-check mr-1.5"></i> <span data-i18n="catLogin">連續登入徽章 (1~1000)</span>
-            </button>
-            <button onclick="switchBadgeCategory('quiz')" id="badge-cat-quiz" class="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 text-slate-600 border-b-4 border-slate-300">
-              <i class="fa-solid fa-circle-check mr-1.5"></i> <span data-i18n="catQuiz">連續全勝徽章 (1~1000)</span>
-            </button>
-          </div>
-
-          <!-- BADGES GRID -->
-          <div id="badgesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <!-- Dynamic Badges Injected via JS -->
-          </div>
-
-        </div>
-      </section>
-
-      <!-- PAGE 3: PLAYER LEADERBOARD & ANALYTICS -->
-      <section id="tab-content-leaderboard" class="hidden space-y-6">
-        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm space-y-6" id="leaderboardExportArea">
-          
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-100 pb-4">
-            <div>
-              <h2 class="text-2xl font-black text-slate-800" data-i18n="leaderboardTitle">登入玩家排行榜</h2>
-              <p class="text-slate-500 font-bold text-sm" data-i18n="leaderboardSubtitle">Firebase Realtime Database 即時玩家積分與連勝數據</p>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-              <button onclick="exportLeaderboardExcel()" class="btn-green-3d text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5">
-                <i class="fa-solid fa-file-excel"></i>
-                <span data-i18n="exportExcel">匯出 EXCEL</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- CHART CONTAINER -->
-          <div class="bg-slate-50 border-2 border-slate-200 rounded-3xl p-5">
-            <h3 class="text-base font-black text-slate-700 mb-3 flex items-center">
-              <i class="fa-solid fa-chart-line text-duoBlue mr-2"></i>
-              <span data-i18n="chartTitle">玩家 XP 與連勝數據分佈圖</span>
-            </h3>
-            <div class="w-full h-64">
-              <canvas id="leaderboardChart"></canvas>
-            </div>
-          </div>
-
-          <!-- LEADERBOARD TABLE -->
-          <div class="overflow-x-auto rounded-2xl border-2 border-slate-200">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-wider border-b-2 border-slate-200">
-                  <th class="p-4 text-center">名次</th>
-                  <th class="p-4" data-i18n="colPlayer">玩家姓名</th>
-                  <th class="p-4 text-center" data-i18n="colXP">總經驗值 (XP)</th>
-                  <th class="p-4 text-center" data-i18n="colLoginStreak">連續登入</th>
-                  <th class="p-4 text-center" data-i18n="colQuizStreak">完美全勝</th>
-                </tr>
-              </thead>
-              <tbody id="leaderboardTableBody" class="divide-y divide-slate-200 font-bold text-sm">
-                <!-- Dynamic Rows -->
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- PAGE 4: QUESTION BANK & jatoch.json SEARCH -->
-      <section id="tab-content-bank" class="hidden space-y-6">
-        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm space-y-6" id="bankExportArea">
-          
-          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-2 border-slate-100 pb-4">
-            <div>
-              <h2 class="text-2xl font-black text-slate-800" data-i18n="bankTitle">所有題庫 (jatoch.json 數據庫)</h2>
-              <p class="text-slate-500 font-bold text-sm" data-i18n="bankSubtitle">支援關鍵字搜尋中文、拼音與日文解釋，並可一鍵匯入匯出</p>
-            </div>
-            
-            <!-- Excel & JSON Management Buttons -->
-            <div class="flex flex-wrap items-center gap-2">
-              <button onclick="exportBankExcel()" class="btn-green-3d text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5">
-                <i class="fa-solid fa-file-excel"></i>
-                <span data-i18n="exportExcel">匯出 EXCEL</span>
-              </button>
-
-              <label class="btn-blue-3d text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5 cursor-pointer">
-                <i class="fa-solid fa-file-import"></i>
-                <span data-i18n="importExcel">匯入 EXCEL</span>
-                <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importBankExcel(event)">
-              </label>
-
-              <button onclick="openAddQuestionModal()" class="btn-purple-3d text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center space-x-1.5">
-                <i class="fa-solid fa-plus"></i>
-                <span data-i18n="addQuestion">新增單字</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- SEARCH FILTER BAR -->
-          <div class="flex flex-col md:flex-row gap-3">
-            <div class="relative flex-grow">
-              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-              <input type="text" id="bankSearchInput" oninput="handleSearchInput()" placeholder="搜尋中文漢字、拼音或日文 (例如：謝謝, xièxie, ありがとう)..." class="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none transition-all">
-            </div>
-
-            <!-- JUMP TO RANGE / PAGE SELECTOR -->
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-black text-slate-500 whitespace-nowrap">快速翻頁:</span>
-              <select id="bankPageSelect" onchange="handlePageSelectChange(event)" class="py-3 px-4 rounded-2xl border-2 border-slate-200 font-extrabold text-sm text-slate-700 bg-white focus:border-duoBlue focus:outline-none cursor-pointer">
-                <option value="0">第 1 - 100 題</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- BANK TABLE WITH INFINITE SCROLL CONTAINER -->
-          <div id="bankTableScrollContainer" onscroll="handleBankScroll(event)" class="overflow-y-auto max-h-[600px] rounded-2xl border-2 border-slate-200 relative">
-            <table class="w-full text-left border-collapse">
-              <thead class="sticky top-0 bg-slate-100 z-10 shadow-sm">
-                <tr class="text-slate-600 font-black text-xs uppercase tracking-wider border-b-2 border-slate-200">
-                  <th class="p-4 w-16 text-center">編號</th>
-                  <th class="p-4" data-i18n="colChinese">中文 (漢字)</th>
-                  <th class="p-4" data-i18n="colPinyin">拼音 (Pinyin)</th>
-                  <th class="p-4" data-i18n="colJapanese">日文解釋 (日本語)</th>
-                  <th class="p-4 text-center" data-i18n="colAudio">語音朗讀</th>
-                  <th class="p-4 text-center">操作</th>
-                </tr>
-              </thead>
-              <tbody id="bankTableBody" class="divide-y divide-slate-200 font-bold text-sm bg-white">
-                <!-- Dynamic Content Injected via JS -->
-              </tbody>
-            </table>
-            <!-- Scroll Indicator / Load More Banner -->
-            <div id="bankLoadMoreBanner" class="p-3 text-center bg-slate-50 border-t border-slate-200 text-xs font-black text-slate-400">
-              向下滾動載入更多題目...
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-    </main>
-
-  </div>
-
-  <!-- AUTHENTICATION MODAL (LOGIN / SIGN UP WITH REAL NAME) -->
-  <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 border-4 border-slate-200 shadow-2xl relative">
-      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-black">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <!-- TAB BUTTONS SIGNIN / SIGNUP -->
-      <div class="flex border-b-2 border-slate-100 mb-6">
-        <button onclick="switchAuthTab('signup')" id="authTabSignUp" class="flex-1 pb-3 text-center font-black text-base border-b-4 border-duoGreen text-duoGreen" data-i18n="btnSignUp">註冊帳號</button>
-        <button onclick="switchAuthTab('signin')" id="authTabSignIn" class="flex-1 pb-3 text-center font-black text-base border-b-4 border-transparent text-slate-400" data-i18n="btnSignIn">會員登入</button>
+    <!-- 登入 / 註冊頁面 (若未登入時顯示) -->
+    <div id="authView" class="max-w-md mx-auto bg-white duo-card p-8 mt-10">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-black text-slate-800" data-i18n="authTitle">玩家登入 / 註冊</h2>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="authSub">請輸入電子郵件、密碼與真實姓名以開始學習</p>
       </div>
-
-      <!-- SIGN UP FORM -->
-      <form id="signUpForm" onsubmit="handleSignUp(event)" class="space-y-4">
+      <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblRealName">真實姓名 (無須審核直接通過)</label>
-          <input type="text" id="signUpRealName" required placeholder="例如：Yamada Taro (山田太郎)" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="realNameLabel">真實姓名 (Real Name)</label>
+          <input type="text" id="authRealName" required class="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none font-medium" placeholder="例: 山田太郎 / Jacky Liu">
         </div>
         <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblEmail">電子郵件帳號</label>
-          <input type="email" id="signUpEmail" required placeholder="user@example.com" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="emailLabel">電子郵件 (Email)</label>
+          <input type="email" id="authEmail" required class="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none font-medium" placeholder="name@example.com">
         </div>
         <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblPassword">密碼</label>
-          <input type="password" id="signUpPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="passLabel">密碼 (Password)</label>
+          <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none font-medium" placeholder="至少 6 位數">
         </div>
-        <button type="submit" class="w-full btn-green-3d text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider mt-2" data-i18n="btnCreateAccount">
-          立即建立帳號
-        </button>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" id="loginBtn" class="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl btn-3d" data-i18n="loginBtn">登入帳號</button>
+          <button type="button" onclick="handleRegister()" class="flex-1 bg-blue-500 text-white font-bold py-3 rounded-xl btn-3d-blue" data-i18n="registerBtn">註冊新帳號</button>
+        </div>
       </form>
-
-      <!-- SIGN IN FORM -->
-      <form id="signInForm" onsubmit="handleSignIn(event)" class="space-y-4 hidden">
-        <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblEmail">電子郵件帳號</label>
-          <input type="email" id="signInEmail" required placeholder="user@example.com" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1" data-i18n="lblPassword">密碼</label>
-          <input type="password" id="signInPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-bold text-sm focus:border-duoGreen focus:outline-none">
-        </div>
-        <button type="submit" class="w-full btn-blue-3d text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider mt-2" data-i18n="btnSignIn">
-          會員登入
-        </button>
-      </form>
-
     </div>
-  </div>
 
-  <!-- jatoch.json MANAGEMENT MODAL -->
-  <div id="jatochModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 border-4 border-slate-200 shadow-2xl relative space-y-4">
-      <button onclick="closeJatochModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-black">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+    <!-- 登入後的應用主介面 -->
+    <div id="appView" class="hidden space-y-6">
 
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-2xl bg-duoYellow text-slate-900 flex items-center justify-center text-xl font-black">
-          <i class="fa-solid fa-database"></i>
-        </div>
-        <div>
-          <h3 class="text-xl font-black text-slate-800">jatoch.json 數據庫管理</h3>
-          <p class="text-xs font-bold text-slate-500">檢視、匯出或匯入專屬的 jatoch.json 題庫檔案</p>
-        </div>
+      <!-- 分頁導航列 -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 duo-card">
+        <button onclick="switchTab(1)" id="tabBtn1" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold bg-green-500 text-white shadow transition">
+          <i class="fa-solid fa-gamepad"></i> <span data-i18n="tab1">隨機考試</span>
+        </button>
+        <button onclick="switchTab(2)" id="tabBtn2" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+          <i class="fa-solid fa-award"></i> <span data-i18n="tab2">連續登入與徽章</span>
+        </button>
+        <button onclick="switchTab(3)" id="tabBtn3" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+          <i class="fa-solid fa-chart-line"></i> <span data-i18n="tab3">玩家排行與分析</span>
+        </button>
+        <button onclick="switchTab(4)" id="tabBtn4" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+          <i class="fa-solid fa-book"></i> <span data-i18n="tab4">題庫總覽 (1萬題)</span>
+        </button>
       </div>
 
-      <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 space-y-3">
-        <p class="text-xs font-bold text-slate-600">目前數據庫題庫筆數：<span id="jatochCountDisplay" class="font-black text-duoGreen text-sm">0</span> 筆</p>
-        
-        <div class="grid grid-cols-1 gap-2.5">
-          <button onclick="downloadJatochJSON()" class="btn-green-3d text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase flex items-center justify-center space-x-2">
-            <i class="fa-solid fa-download"></i>
-            <span>下載 / 匯出成 jatoch.json</span>
+      <!-- 全域工具列：Excel 匯入匯出與頁面截圖匯出 -->
+      <div class="flex flex-wrap items-center justify-between bg-white p-4 duo-card gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" data-i18n="globalTools">資料與報表工具:</span>
+          <button onclick="exportToExcel()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-file-excel"></i> <span data-i18n="exportExcel">匯出 EXCEL</span>
           </button>
-
-          <label class="btn-blue-3d text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase flex items-center justify-center space-x-2 cursor-pointer">
-            <i class="fa-solid fa-upload"></i>
-            <span>上傳 / 載入 jatoch.json 檔案</span>
-            <input type="file" id="jatochFileInput" accept=".json" class="hidden" onchange="uploadJatochJSON(event)">
+          <label class="px-3 py-2 bg-slate-700 text-white rounded-xl text-xs font-bold hover:bg-slate-800 flex items-center gap-1.5 shadow cursor-pointer">
+            <i class="fa-solid fa-file-import"></i> <span data-i18n="importExcel">匯入 EXCEL</span>
+            <input type="file" id="excelFileIn" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
           </label>
-
-          <button onclick="seedJatochDefaultDB()" class="btn-purple-3d text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase flex items-center justify-center space-x-2">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>重置為預設完整 jatoch.json 題庫</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportPagePNG()" class="px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-camera"></i> <span data-i18n="exportPNG">匯出高畫質 PNG</span>
+          </button>
+          <button onclick="exportPagePDF()" class="px-3 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-file-pdf"></i> <span data-i18n="exportPDF">匯出 PDF 報告</span>
           </button>
         </div>
       </div>
+
+      <!-- 頁面一：隨機考試題庫 (Duolingo 風格) -->
+      <div id="tabContent1" class="tab-content space-y-4">
+        <div class="bg-white duo-card p-6 md:p-8">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full" id="quizProgressBadge">第 1 題 / 共 10 題</span>
+              <h3 class="text-xl font-black text-slate-800 mt-2" data-i18n="quizHeader">日本語對應漢語測驗</h3>
+            </div>
+            <button onclick="speakText(currentQuizQuestion?.chinese || '請聽語音')" class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-xl hover:bg-sky-200 transition shadow">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </div>
+
+          <!-- 題目卡片 -->
+          <div id="quizCardContainer" class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 text-center mb-6">
+            <div id="quizPrompt" class="text-2xl font-black text-slate-800 mb-2">載入中...</div>
+            <div id="quizSubPrompt" class="text-sm text-slate-500">請選出正確的日文涵義或拼音對應</div>
+          </div>
+
+          <!-- 選項區域 -->
+          <div id="quizOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <!-- 動態生成選項 -->
+          </div>
+
+          <!-- 測驗控制列 -->
+          <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+            <div id="quizFeedback" class="font-bold text-sm"></div>
+            <button onclick="nextQuizQuestion()" id="nextQuizBtn" class="hidden px-6 py-3 bg-green-500 text-white font-bold rounded-xl btn-3d">
+              <span data-i18n="nextQuestion">下一題</span> <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 頁面二：連續登入與徽章系統 (1~1000次) -->
+      <div id="tabContent2" class="tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- 連續登入卡片 -->
+          <div class="bg-white duo-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-fire text-amber-500"></i> <span data-i18n="loginStreakTitle">連續登入成就 (1~1000天)</span>
+              </h3>
+              <span id="loginStreakCount" class="bg-amber-100 text-amber-700 font-black px-3 py-1 rounded-full text-sm">1 天</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="loginStreakDesc">每日登入即可解鎖對應天數的榮譽徽章！最高解鎖至 1000 天。</p>
+            <div id="loginBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl">
+              <!-- 動態渲染 1~1000 登入徽章 -->
+            </div>
+          </div>
+
+          <!-- 連續答題成功卡片 -->
+          <div class="bg-white duo-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-yellow-500"></i> <span data-i18n="quizStreakTitle">連續答題成功 (1~1000次)</span>
+              </h3>
+              <span id="quizStreakCount" class="bg-yellow-100 text-yellow-700 font-black px-3 py-1 rounded-full text-sm">0 次</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="quizStreakDesc">在考試中連續答對 10 題以上或累積答題成功次數解鎖專屬頭銜！</p>
+            <div id="quizBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl">
+              <!-- 動態渲染 1~1000 答題徽章 -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 頁面三：玩家排行榜與分析圖表 -->
+      <div id="tabContent3" class="tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- 排行榜 -->
+          <div class="bg-white duo-card p-6 lg:col-span-1">
+            <h3 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-trophy text-amber-500"></i> <span data-i18n="leaderboardTitle">登入玩家排行</span>
+            </h3>
+            <div id="leaderboardList" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+              <!-- 動態排行榜 -->
+            </div>
+          </div>
+
+          <!-- Chart.js 統計圖表 -->
+          <div class="bg-white duo-card p-6 lg:col-span-2 flex flex-col justify-between">
+            <h3 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-indigo-500"></i> <span data-i18n="analyticsTitle">玩家答題與學習表現分析</span>
+            </h3>
+            <div class="relative h-72 w-full">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 頁面四：所有題庫 (支援 10,000 題、關鍵字搜尋、下拉跳頁、捲動) -->
+      <div id="tabContent4" class="tab-content hidden space-y-4">
+        <div class="bg-white duo-card p-6">
+          <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-black text-slate-800" data-i18n="bankHeader">jatoch.json 題庫總覽 (共 10,000 題)</h3>
+              <p class="text-xs text-slate-500 mt-1" data-i18n="bankSub">支援關鍵字即時搜尋、區間下拉快速跳頁與捲動載入</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- 區間下拉跳頁 -->
+              <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                <span class="text-xs font-bold text-slate-600" data-i18n="jumpRange">跳至區間:</span>
+                <select id="pageRangeSelect" onchange="jumpToBankRange(this.value)" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+                  <!-- 動態生成區間選單 -->
+                </select>
+              </div>
+              <button onclick="openAddQuestionModal()" class="px-4 py-2 bg-green-500 text-white text-xs font-bold rounded-xl btn-3d flex items-center gap-1">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="addQuestion">新增題目</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 搜尋列 -->
+          <div class="mb-4">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
+              <input type="text" id="bankSearchInput" oninput="filterBankData(this.value)" class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none text-sm font-medium" placeholder="搜尋漢語、注音、日文含義、標籤...">
+            </div>
+          </div>
+
+          <!-- 捲動與題庫表格容器 -->
+          <div id="bankTableScrollContainer" onscroll="handleBankScroll(this)" class="max-h-[500px] overflow-y-auto border-2 border-slate-100 rounded-xl">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-100 text-slate-700 text-xs uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="p-3 border-b">#</th>
+                  <th class="p-3 border-b" data-i18n="thChinese">漢語 (Chinese)</th>
+                  <th class="p-3 border-b" data-i18n="thPinyin">拼音 (Pinyin)</th>
+                  <th class="p-3 border-b" data-i18n="thJapanese">日文含義 (Japanese)</th>
+                  <th class="p-3 border-b text-center" data-i18n="thAction">操作</th>
+                </tr>
+              </thead>
+              <tbody id="bankTableBody" class="text-sm divide-y divide-slate-100">
+                <!-- 動態載入題庫項目 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
-  </div>
+  </main>
 
-  <!-- ADD QUESTION MODAL -->
-  <div id="addQuestionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-slate-200 shadow-2xl relative">
-      <button onclick="closeAddQuestionModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-black">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <h3 class="text-xl font-black text-slate-800 mb-4" data-i18n="modalAddTitle">新增漢語詞彙題目</h3>
-      
-      <form onsubmit="handleAddQuestion(event)" class="space-y-3">
+  <!-- 新增/編輯題目 Modal -->
+  <div id="questionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white duo-card max-w-lg w-full p-6 space-y-4">
+      <h3 class="text-xl font-black text-slate-800" data-i18n="modalTitle">新增 / 編輯題目</h3>
+      <form id="questionForm" onsubmit="saveQuestionItem(event)" class="space-y-3">
+        <input type="hidden" id="editQuestionIndex">
         <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1">中文 (漢字)</label>
-          <input type="text" id="addZh" required placeholder="例如：早上好" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-sm">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="modalChinese">漢語內容</label>
+          <input type="text" id="modalChinese" required class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none text-sm">
         </div>
         <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1">拼音 (Pinyin)</label>
-          <input type="text" id="addPy" required placeholder="例如：zǎoshang hǎo" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-sm">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="modalPinyin">拼音 / 注音</label>
+          <input type="text" id="modalPinyin" required class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none text-sm">
         </div>
         <div>
-          <label class="block text-xs font-black uppercase text-slate-500 mb-1">日文解釋 (日本語)</label>
-          <input type="text" id="addJa" required placeholder="例如：おはようございます" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 font-bold text-sm">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="modalJapanese">日文翻譯 / 含義</label>
+          <input type="text" id="modalJapanese" required class="w-full px-3 py-2 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none text-sm">
         </div>
-        <button type="submit" class="w-full btn-purple-3d text-white font-black py-3 rounded-xl text-sm uppercase tracking-wider mt-2" data-i18n="saveBtn">
-          儲存詞彙
-        </button>
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl text-xs" data-i18n="modalCancel">取消</button>
+          <button type="submit" class="px-4 py-2 bg-green-500 text-white font-bold rounded-xl text-xs btn-3d" data-i18n="modalSave">儲存</button>
+        </div>
       </form>
     </div>
   </div>
 
-  <!-- FOOTER -->
-  <footer class="bg-white border-t-2 border-slate-200 py-4 text-center text-xs font-extrabold text-slate-400">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <p>© 2026 日本人學漢語 (Japanese Learn Chinese Gamified Platform)</p>
-      <p class="text-slate-500">Integrated Firebase Realtime Database & jatoch.json Standard</p>
-    </div>
-  </footer>
-
-  <!-- MAIN SCRIPT (Firebase Modules + jatoch.json Logic) -->
+  <!-- Firebase & App Script 邏輯區 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-      getAuth, 
-      createUserWithEmailAndPassword, 
-      signInWithEmailAndPassword, 
-      signOut, 
-      onAuthStateChanged,
-      updateProfile
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-      getDatabase, 
-      ref, 
-      set, 
-      get, 
-      onValue, 
-      push, 
-      remove 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // 1. INTEGRATED USER FIREBASE CONFIGURATION
     const firebaseConfig = {
       apiKey: "AIzaSyDqGP24Qwf7d7G3R1W7pSlLKI23oRWoL_8",
       authDomain: "jptoch-733a4.firebaseapp.com",
+      databaseURL: "https://jptoch-733a4-default-rtdb.firebaseio.com",
       projectId: "jptoch-733a4",
       storageBucket: "jptoch-733a4.firebasestorage.app",
       messagingSenderId: "540609740875",
       appId: "1:540609740875:web:cb90469cf22240a0464dce",
-      measurementId: "G-RTGD4LG27M",
-      databaseURL: "https://jptoch-733a4-default-rtdb.firebaseio.com"
+      measurementId: "G-RTGD4LG27M"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // DEFAULT jatoch.json PRESET DATASET (Tailored for Japanese speakers learning Mandarin)
-    const jatochDefaultPreset = [
-      { id: '1', zh: '你好', py: 'nǐ hǎo', ja: 'こんにちは' },
-      { id: '2', zh: '謝謝', py: 'xièxie', ja: 'ありがとう' },
-      { id: '3', zh: '再見', py: 'zàijiàn', ja: 'さようなら' },
-      { id: '4', zh: '對不起', py: 'duìbuqǐ', ja: 'ごめんなさい' },
-      { id: '5', zh: '沒關係', py: 'méi guānxi', ja: '気にしないで / 大丈夫' },
-      { id: '6', zh: '我是日本人', py: 'wǒ shì rìběn rén', ja: '私は日本人です' },
-      { id: '7', zh: '你叫甚麼名字？', py: 'nǐ jiào shénme míngzi?', ja: 'お名前は何ですか？' },
-      { id: '8', zh: '好久不見', py: 'hǎojiǔ bújiàn', ja: 'お久しぶりです' },
-      { id: '9', zh: '好吃的中國菜', py: 'hǎochī de zhōngguó cài', ja: '美味しい中華料理' },
-      { id: '10', zh: '多少錢？', py: 'duōshao qián?', ja: 'いくらですか？' },
-      { id: '11', zh: '在洗手間', py: 'zài xǐshǒujiān', ja: 'お手洗いにいます' },
-      { id: '12', zh: '很高興認識你', py: 'hěn gāoxìng rènshi nǐ', ja: 'お会いできて嬉しいです' },
-      { id: '13', zh: '明天見', py: 'míngtiān jiàn', ja: 'また明日' },
-      { id: '14', zh: '請多關照', py: 'qǐng duō guānzhào', ja: 'よろしくお願いします' },
-      { id: '15', zh: '加油！', py: 'jiāyóu!', ja: '頑張って！' }
-    ];
+    // 全域變數
+    window.currentUser = null;
+    window.questionBank = [];
+    window.filteredBank = [];
+    window.displayLimit = 100; // 預設每批顯示100題，支援順暢捲動
+    window.currentQuizIndex = 0;
+    window.quizQuestions = [];
+    window.currentQuizQuestion = null;
+    window.correctStreak = 0;
+    window.loginStreak = 1;
+    window.currentLang = 'zh';
+    let chartInstance = null;
 
-    // GLOBAL APPLICATION STATE
-    window.state = {
-      lang: 'ja',
-      currentUser: null,
-      userData: {
-        realName: 'Learner',
-        xp: 0,
-        loginStreak: 1,
-        perfectQuizStreak: 0,
-        lastLoginDate: new Date().toISOString().split('T')[0]
-      },
-      questionBank: [...jatochDefaultPreset],
-      filteredBank: [],
-      displayLimit: 50,
-      batchSize: 50,
-      currentQuiz: [],
-      currentQuizIndex: 0,
-      currentQuizScore: 0,
-      activeBadgeCat: 'login',
-      leaderboardChart: null,
-      speechRecognition: null,
-      isListening: false
-    };
-
-    // I18N DICTIONARY FOR 3 LANGUAGES
+    // 多國語系字典
     const i18n = {
-      ja: {
-        lastSaved: "最終保存:",
-        loginBtn: "ログイン / 登録",
-        tabQuiz: "10問ランダム試験",
-        tabBadges: "成就とバッジ",
-        tabLeaderboard: "ランキングと統計",
-        tabBank: "題庫と JSON",
-        exportTools: "現在のタブを出力",
-        quizBadge: "デイリーチャレンジ",
-        quizTitle: "日本人向け中国語10問テスト",
-        quizSubtitle: "ピンイン・文法・語彙のリアルタイム演習",
-        resetQuiz: "新しい10問",
-        badgeTitle: "実績とバッジ達成 (1~1000回)",
-        badgeSubtitle: "連続ログイン（1〜1000日）と10問連続全問正解（1〜1000回）",
-        loginStreak: "連続ログイン",
-        quizStreak: "10問全問正解",
-        catLogin: "ログインストリーク (1~1000)",
-        catQuiz: "全問正解ストリーク (1~1000)",
-        leaderboardTitle: "世界プレイヤーランキング",
-        leaderboardSubtitle: "Firebase Realtime Database スコアランキング",
-        exportExcel: "Excel出力",
-        importExcel: "Excel取り込み",
-        chartTitle: "プレイヤーXPとストリーク分布図",
-        colPlayer: "プレイヤー名",
-        colXP: "獲得XP",
-        colLoginStreak: "ログイン日数",
-        colQuizStreak: "全問正解回数",
-        bankTitle: "全問題庫 (jatoch.json)",
-        bankSubtitle: "HSK中国語単語・ピンイン・日本語訳",
-        addQuestion: "単語追加",
-        colChinese: "中国語 (漢字)",
-        colPinyin: "ピンイン (拼音)",
-        colJapanese: "日本語訳",
-        colAudio: "音声再生",
-        btnSignUp: "新規登録",
-        btnSignIn: "ログイン",
-        lblRealName: "本名 (審査なし即時承認)",
-        lblEmail: "メールアドレス",
-        lblPassword: "パスワード",
-        btnCreateAccount: "アカウント作成",
-        modalAddTitle: "新しい中国語単語を追加",
-        saveBtn: "単語を保存",
-        speakPrompt: "マイクを押して中国語で発音してください",
-        listening: "音声聞き取り中..."
-      },
       zh: {
-        lastSaved: "上次儲存時間:",
-        loginBtn: "登入 / 註冊帳號",
-        tabQuiz: "10題隨機測驗",
-        tabBadges: "成就與徽章",
-        tabLeaderboard: "排行榜與統計",
-        tabBank: "題庫與 JSON",
-        exportTools: "匯出當前分頁",
-        quizBadge: "每日挑戰",
-        quizTitle: "日本人學漢語 10題隨機測驗",
-        quizSubtitle: "學習漢語拼音、文法與日文解釋對照練習",
-        resetQuiz: "重新生成 10 題",
-        badgeTitle: "成就與徽章系統 (1~1000次)",
-        badgeSubtitle: "追蹤連續登入天數 (1~1000天) 與 10題測驗連續全對次數 (1~1000次)",
-        loginStreak: "連續登入",
-        quizStreak: "10題完美全勝",
-        catLogin: "連續登入徽章 (1~1000)",
-        catQuiz: "連續全勝徽章 (1~1000)",
-        leaderboardTitle: "登入玩家排行榜",
-        leaderboardSubtitle: "Firebase Realtime Database 即時玩家積分與連勝數據",
+        navTitle: "日本人學漢語",
+        authTitle: "玩家登入 / 註冊",
+        authSub: "請輸入電子郵件、密碼與真實姓名以開始學習",
+        realNameLabel: "真實姓名 (Real Name)",
+        emailLabel: "電子郵件 (Email)",
+        passLabel: "密碼 (Password)",
+        loginBtn: "登入帳號",
+        registerBtn: "註冊新帳號",
+        tab1: "隨機考試",
+        tab2: "連續登入與徽章",
+        tab3: "玩家排行與分析",
+        tab4: "題庫總覽 (1萬題)",
+        globalTools: "資料與報表工具:",
         exportExcel: "匯出 EXCEL",
         importExcel: "匯入 EXCEL",
-        chartTitle: "玩家 XP 與連勝數據分佈圖",
-        colPlayer: "玩家姓名",
-        colXP: "總經驗值 (XP)",
-        colLoginStreak: "連續登入",
-        colQuizStreak: "完美全勝",
-        bankTitle: "所有題庫 (jatoch.json 數據庫)",
-        bankSubtitle: "支援關鍵字搜尋中文、拼音與日文解釋，並可一鍵匯入匯出",
-        addQuestion: "新增單字",
-        colChinese: "中文 (漢字)",
-        colPinyin: "拼音 (Pinyin)",
-        colJapanese: "日文解釋 (日本語)",
-        colAudio: "語音朗讀",
-        btnSignUp: "註冊帳號",
-        btnSignIn: "會員登入",
-        lblRealName: "真實姓名 (無須審核直接通過)",
-        lblEmail: "電子郵件帳號",
-        lblPassword: "密碼",
-        btnCreateAccount: "立即建立帳號",
-        modalAddTitle: "新增漢語詞彙題目",
-        saveBtn: "儲存詞彙",
-        speakPrompt: "請點擊麥克風並用中文朗讀",
-        listening: "正在聆聽語音中..."
+        exportPNG: "匯出高畫質 PNG",
+        exportPDF: "匯出 PDF 報告",
+        quizHeader: "日本語對應漢語測驗",
+        nextQuestion: "下一題",
+        loginStreakTitle: "連續登入成就 (1~1000天)",
+        loginStreakDesc: "每日登入即可解鎖對應天數的榮譽徽章！最高解鎖至 1000 天。",
+        quizStreakTitle: "連續答題成功 (1~1000次)",
+        quizStreakDesc: "在考試中連續答對 10 題以上或累積答題成功次數解鎖專屬頭銜！",
+        leaderboardTitle: "登入玩家排行",
+        analyticsTitle: "玩家答題與學習表現分析",
+        bankHeader: "jatoch.json 題庫總覽 (共 10,000 題)",
+        bankSub: "支援關鍵字即時搜尋、區間下拉快速跳頁與捲動載入",
+        jumpRange: "跳至區間:",
+        addQuestion: "新增題目",
+        thChinese: "漢語 (Chinese)",
+        thPinyin: "拼音 (Pinyin)",
+        thJapanese: "日文含義 (Japanese)",
+        thAction: "操作",
+        modalTitle: "新增 / 編輯題目",
+        modalChinese: "漢語內容",
+        modalPinyin: "拼音 / 注音",
+        modalJapanese: "日文翻譯 / 含義",
+        modalCancel: "取消",
+        modalSave: "儲存"
+      },
+      ja: {
+        navTitle: "日本人のための中国語学習",
+        authTitle: "プレーヤーログイン / 登録",
+        authSub: "メールアドレス、パスワード、本名を入力して開始してください",
+        realNameLabel: "本名 (Real Name)",
+        emailLabel: "メールアドレス",
+        passLabel: "パスワード",
+        loginBtn: "ログイン",
+        registerBtn: "アカウント登録",
+        tab1: "ランダムテスト",
+        tab2: "連続ログイン・バッジ",
+        tab3: "ランキング・分析",
+        tab4: "問題集一覧 (1万題)",
+        globalTools: "データ・レポートツール:",
+        exportExcel: "EXCELエクスポート",
+        importExcel: "EXCELインポート",
+        exportPNG: "高画質PNG出力",
+        exportPDF: "PDFレポート出力",
+        quizHeader: "日本語対応中国語クイズ",
+        nextQuestion: "次の問題",
+        loginStreakTitle: "連続ログイン実績 (1~1000日)",
+        loginStreakDesc: "毎日ログインして対応する日の栄誉バッジをアンロック！",
+        quizStreakTitle: "連続正解実績 (1~1000回)",
+        quizStreakDesc: "クイズで連続正解して専用の称号を獲得しよう！",
+        leaderboardTitle: "プレーヤーランキング",
+        analyticsTitle: "学習パフォーマンス分析",
+        bankHeader: "jatoch.json 問題集一覧 (計10,000問)",
+        bankSub: "キーワード検索、区間ドロップダウンジャンプ、スクロール読み込み対応",
+        jumpRange: "範囲ジャンプ:",
+        addQuestion: "問題追加",
+        thChinese: "中国語",
+        thPinyin: "ピンイン",
+        thJapanese: "日本語の意味",
+        thAction: "操作",
+        modalTitle: "問題の追加 / 編集",
+        modalChinese: "中国語テキスト",
+        modalPinyin: "ピンイン / 読み",
+        modalJapanese: "日本語翻訳",
+        modalCancel: "キャンセル",
+        modalSave: "保存"
       },
       en: {
-        lastSaved: "Last Saved:",
-        loginBtn: "Login / Sign Up",
-        tabQuiz: "10-Question Quiz",
-        tabBadges: "Achievements",
-        tabLeaderboard: "Leaderboard",
-        tabBank: "Bank & JSON",
-        exportTools: "Export Active Tab",
-        quizBadge: "Daily Challenge",
-        quizTitle: "10-Question Chinese Exam",
-        quizSubtitle: "Practice Chinese Pinyin, Grammar & Meaning for Japanese Learners",
-        resetQuiz: "New 10 Questions",
-        badgeTitle: "Achievements & Badges (1~1000)",
-        badgeSubtitle: "Track Continuous Logins (1~1000 Days) and Perfect Quizzes (1~1000 Times)",
-        loginStreak: "Login Streak",
-        quizStreak: "Perfect Quizzes",
-        catLogin: "Login Streaks (1~1000)",
-        catQuiz: "Perfect Streaks (1~1000)",
+        navTitle: "Chinese Learning for Japanese",
+        authTitle: "Player Login / Sign Up",
+        authSub: "Enter email, password and real name to start learning",
+        realNameLabel: "Real Name",
+        emailLabel: "Email",
+        passLabel: "Password",
+        loginBtn: "Login",
+        registerBtn: "Sign Up",
+        tab1: "Random Quiz",
+        tab2: "Streaks & Badges",
+        tab3: "Leaderboard & Analytics",
+        tab4: "Question Bank (10k)",
+        globalTools: "Data & Report Tools:",
+        exportExcel: "Export EXCEL",
+        importExcel: "Import EXCEL",
+        exportPNG: "Export High-Res PNG",
+        exportPDF: "Export PDF Report",
+        quizHeader: "Japanese-Chinese Matching Quiz",
+        nextQuestion: "Next Question",
+        loginStreakTitle: "Login Streaks (1-1000 Days)",
+        loginStreakDesc: "Log in daily to unlock commemorative badges up to 1000 days!",
+        quizStreakTitle: "Quiz Success Streaks (1-1000)",
+        quizStreakDesc: "Build up consecutive correct answers in quizzes to unlock titles!",
         leaderboardTitle: "Player Leaderboard",
-        leaderboardSubtitle: "Realtime Firebase Player rankings",
-        exportExcel: "Export Excel",
-        importExcel: "Import Excel",
-        chartTitle: "Player XP & Streak Analytics Distribution",
-        colPlayer: "Player Name",
-        colXP: "Total XP",
-        colLoginStreak: "Login Days",
-        colQuizStreak: "Perfect Quizzes",
-        bankTitle: "Question Bank (jatoch.json)",
-        bankSubtitle: "Search Chinese words, Pinyin, and Japanese translations",
-        addQuestion: "Add Word",
-        colChinese: "Chinese",
-        colPinyin: "Pinyin",
-        colJapanese: "Japanese Meaning",
-        colAudio: "Listen",
-        btnSignUp: "Sign Up",
-        btnSignIn: "Sign In",
-        lblRealName: "Real Name (Instant Pass)",
-        lblEmail: "Email Address",
-        lblPassword: "Password",
-        btnCreateAccount: "Create Account",
-        modalAddTitle: "Add New Vocabulary",
-        saveBtn: "Save Vocabulary",
-        speakPrompt: "Click microphone and speak Chinese",
-        listening: "Listening..."
+        analyticsTitle: "Learning Performance Analytics",
+        bankHeader: "jatoch.json Question Bank (10,000 items)",
+        bankSub: "Supports instant search, range pagination dropdown and infinite scroll",
+        jumpRange: "Jump Range:",
+        addQuestion: "Add Question",
+        thChinese: "Chinese",
+        thPinyin: "Pinyin",
+        thJapanese: "Japanese Meaning",
+        thAction: "Action",
+        modalTitle: "Add / Edit Question",
+        modalChinese: "Chinese Text",
+        modalPinyin: "Pinyin",
+        modalJapanese: "Japanese Translation",
+        modalCancel: "Cancel",
+        modalSave: "Save"
       }
     };
 
-    // -------------------------------------------------------------
-    // jatoch.json SPECIFIC DATABASE MANAGEMENT & INFINITE SCROLL
-    // -------------------------------------------------------------
-    function loadQuestionBankFromDB() {
-      const bankRef = ref(db, 'questionBank');
-      onValue(bankRef, (snap) => {
-        if (snap.exists()) {
-          const val = snap.val();
-          state.questionBank = Object.keys(val).map((key, idx) => ({ id: key, indexNum: idx + 1, ...val[key] }));
-        } else {
-          // If database is empty, seed defaults
-          seedJatochDefaultDB();
+    window.setLanguage = function(lang) {
+      window.currentLang = lang;
+      ['zh', 'ja', 'en'].forEach(l => {
+        const btn = document.getElementById(`lang${l.charAt(0).toUpperCase() + l.slice(1)}`);
+        if (btn) {
+          if (l === lang) {
+            btn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-white text-green-600 shadow-sm";
+          } else {
+            btn.className = "px-3 py-1 text-xs font-bold rounded-lg text-slate-600";
+          }
         }
-        const countDisplay = document.getElementById('jatochCountDisplay');
-        if (countDisplay) countDisplay.innerText = state.questionBank.length;
-        
-        updatePageSelectOptions();
-        filterQuestionBank();
       });
-    }
-
-    function updatePageSelectOptions() {
-      const select = document.getElementById('bankPageSelect');
-      if (!select) return;
-      select.innerHTML = '';
-      
-      const total = state.filteredBank.length > 0 ? state.filteredBank.length : state.questionBank.length;
-      const pageSize = 100;
-      const pages = Math.ceil(total / pageSize) || 1;
-
-      for (let i = 0; i < pages; i++) {
-        const start = i * pageSize + 1;
-        const end = Math.min((i + 1) * pageSize, total);
-        const opt = document.createElement('option');
-        opt.value = i * pageSize;
-        opt.innerText = `第 ${start} - ${end} 題`;
-        select.appendChild(opt);
-      }
-    }
-
-    window.handleSearchInput = function() {
-      state.displayLimit = state.batchSize;
-      filterQuestionBank();
-      updatePageSelectOptions();
+      const dict = i18n[lang];
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
     };
 
-    window.handlePageSelectChange = function(e) {
-      const startIndex = parseInt(e.target.value, 10);
-      state.displayLimit = startIndex + state.batchSize;
-      renderQuestionBank(startIndex);
-      
-      const container = document.getElementById('bankTableScrollContainer');
-      if (container) container.scrollTop = 0;
-    };
-
-    function filterQuestionBank() {
-      const query = document.getElementById('bankSearchInput')?.value.toLowerCase().trim() || '';
-      if (!query) {
-        state.filteredBank = [...state.questionBank];
-      } else {
-        state.filteredBank = state.questionBank.filter(item => 
-          (item.zh && item.zh.toLowerCase().includes(query)) ||
-          (item.py && item.py.toLowerCase().includes(query)) ||
-          (item.ja && item.ja.toLowerCase().includes(query)) ||
-          (item.indexNum && String(item.indexNum).includes(query))
-        );
-      }
-      renderQuestionBank(0);
-    }
-
-    window.handleBankScroll = function(event) {
-      const el = event.target;
-      if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) {
-        if (state.displayLimit < state.filteredBank.length) {
-          state.displayLimit += state.batchSize;
-          renderQuestionBank(null, true);
+    // 監聽 Auth 狀態
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        window.currentUser = user;
+        document.getElementById("authView").classList.add("hidden");
+        document.getElementById("appView").classList.remove("hidden");
+        
+        // 取得真實姓名與玩家數據
+        const userRef = ref(db, `users/${user.uid}`);
+        const snap = await get(userRef);
+        let realName = user.email.split('@')[0];
+        if (snap.exists() && snap.val().realName) {
+          realName = snap.val().realName;
         }
-      }
-    };
+        document.getElementById("userNameDisplay").textContent = `${realName} (${user.email})`;
+        document.getElementById("userInfoSection").classList.remove("hidden");
 
-    window.renderQuestionBank = function(startIndexOverride = null, isAppendMode = false) {
-      const tbody = document.getElementById('bankTableBody');
-      const loadBanner = document.getElementById('bankLoadMoreBanner');
-      if (!tbody) return;
-
-      const startIndex = startIndexOverride !== null ? startIndexOverride : 0;
-      const itemsToRender = state.filteredBank.slice(startIndex, state.displayLimit);
-
-      if (!isAppendMode) {
-        tbody.innerHTML = '';
-      }
-
-      if (itemsToRender.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-bold">查無相符的題目數據</td></tr>`;
-        if (loadBanner) loadBanner.innerText = "已載入完畢";
-        return;
-      }
-
-      const rowsHTML = itemsToRender.map((item, idx) => `
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-4 text-center font-extrabold text-xs text-slate-400">${item.indexNum || (startIndex + idx + 1)}</td>
-          <td class="p-4 font-black text-slate-800 text-base">${item.zh}</td>
-          <td class="p-4 font-bold text-slate-500">${item.py || ''}</td>
-          <td class="p-4 font-bold text-slate-700">${item.ja}</td>
-          <td class="p-4 text-center">
-            <button onclick="speakText('${item.zh.replace(/'/g, "\\'")}')" class="w-9 h-9 rounded-xl bg-duoBlue/10 text-duoBlue hover:bg-duoBlue hover:text-white flex items-center justify-center mx-auto transition-all">
-              <i class="fa-solid fa-volume-high"></i>
-            </button>
-          </td>
-          <td class="p-4 text-center">
-            <button onclick="deleteQuestionItem('${item.id}')" class="text-slate-400 hover:text-duoRed text-sm">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-
-      if (isAppendMode) {
-        tbody.innerHTML += rowsHTML;
-      } else {
-        tbody.innerHTML = rowsHTML;
-      }
-
-      if (loadBanner) {
-        if (state.displayLimit >= state.filteredBank.length) {
-          loadBanner.innerText = `已顯示全部 ${state.filteredBank.length} 筆題目`;
+        // 同步登入次數與答題次數
+        if (snap.exists()) {
+          const data = snap.val();
+          window.loginStreak = data.loginStreak || 1;
+          window.correctStreak = data.correctStreak || 0;
         } else {
-          loadBanner.innerText = `已載入 ${Math.min(state.displayLimit, state.filteredBank.length)} / ${state.filteredBank.length} 筆 (向下滾動載入更多)...`;
+          await set(userRef, { realName: realName, email: user.email, loginStreak: 1, correctStreak: 0, lastLogin: new Date().toISOString() });
         }
+
+        // 載入題庫資料
+        await loadQuestionBankFromDB();
+        renderBadges();
+        initChart();
+        loadLeaderboard();
+        startQuiz();
+      } else {
+        window.currentUser = null;
+        document.getElementById("authView").classList.remove("hidden");
+        document.getElementById("appView").classList.add("hidden");
+        document.getElementById("userInfoSection").classList.add("hidden");
       }
-    };
+    });
 
-    window.handleSignIn = async function(e) {
+    // 登入功能
+    window.handleAuth = async function(e) {
       e.preventDefault();
-      const email = document.getElementById('signInEmail').value.trim();
-      const password = document.getElementById('signInPassword').value.trim();
-
+      const email = document.getElementById("authEmail").value;
+      const pass = document.getElementById("authPassword").value;
       try {
-        await signInWithEmailAndPassword(auth, email, password);
-        closeAuthModal();
+        await signInWithEmailAndPassword(auth, email, pass);
+        updateLastSavedTime();
       } catch (err) {
         alert("登入失敗: " + err.message);
       }
     };
 
-    window.handleSignOut = function() {
-      signOut(auth);
-    };
-
-    // -------------------------------------------------------------
-    // jatoch.json SPECIFIC DATABASE MANAGEMENT
-    // -------------------------------------------------------------
-    function loadQuestionBankFromDB() {
-      const bankRef = ref(db, 'questionBank');
-      onValue(bankRef, (snap) => {
-        if (snap.exists()) {
-          const val = snap.val();
-          state.questionBank = Object.keys(val).map(key => ({ id: key, ...val[key] }));
-        } else {
-          // If database is empty, seed defaults
-          seedJatochDefaultDB();
-        }
-        const countDisplay = document.getElementById('jatochCountDisplay');
-        if (countDisplay) countDisplay.innerText = state.questionBank.length;
-        renderQuestionBank();
-      });
-    }
-
-    window.seedJatochDefaultDB = async function() {
-      const bankRef = ref(db, 'questionBank');
-      await set(bankRef, null); // reset
-      for (let item of jatochDefaultPreset) {
-        await push(bankRef, item);
-      }
-      updateSavedTimestamp();
-      alert("已重置為預設完整 jatoch.json 題庫！");
-    };
-
-    window.downloadJatochJSON = function() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.questionBank, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "jatoch.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    };
-
-    window.uploadJatochJSON = function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        try {
-          const json = JSON.parse(e.target.result);
-          if (Array.isArray(json)) {
-            const bankRef = ref(db, 'questionBank');
-            await set(bankRef, null); // Overwrite with new jatoch.json
-            for (let item of json) {
-              if (item.zh && item.ja) {
-                await push(bankRef, {
-                  zh: item.zh,
-                  py: item.py || '',
-                  ja: item.ja
-                });
-              }
-            }
-            updateSavedTimestamp();
-            alert("成功載入 jatoch.json 題庫數據！");
-            closeJatochModal();
-          } else {
-            alert("jatoch.json 格式必須為陣列 Array!");
-          }
-        } catch (err) {
-          alert("JSON 檔案解析錯誤: " + err.message);
-        }
-      };
-      reader.readAsText(file);
-    };
-
-    window.deleteQuestionItem = async function(id) {
-      if (confirm("確定要刪除此筆題庫？")) {
-        const itemRef = ref(db, `questionBank/${id}`);
-        await remove(itemRef);
-        updateSavedTimestamp();
-      }
-    };
-
-    // -------------------------------------------------------------
-    // SPEECH SYNTHESIS & RECOGNITION (TTS / STT)
-    // -------------------------------------------------------------
-    window.speakText = function(text, lang = 'zh-CN') {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        utterance.rate = 0.85;
-        window.speechSynthesis.speak(utterance);
-      }
-    };
-
-    function setupSpeechRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        state.speechRecognition = new SpeechRecognition();
-        state.speechRecognition.lang = 'zh-CN';
-        state.speechRecognition.continuous = false;
-        state.speechRecognition.interimResults = false;
-
-        state.speechRecognition.onresult = (event) => {
-          const spoken = event.results[0][0].transcript;
-          handleSpokenAnswer(spoken);
-        };
-
-        state.speechRecognition.onerror = () => {
-          state.isListening = false;
-          updateMicButtonUI();
-        };
-
-        state.speechRecognition.onend = () => {
-          state.isListening = false;
-          updateMicButtonUI();
-        };
-      }
-    }
-
-    window.toggleSpeechListen = function() {
-      if (!state.speechRecognition) {
-        alert("Speech Recognition is not supported on this browser.");
+    // 註冊功能 (包含真實姓名記錄，無需審核直接通過)
+    window.handleRegister = async function() {
+      const email = document.getElementById("authEmail").value;
+      const pass = document.getElementById("authPassword").value;
+      const realName = document.getElementById("authRealName").value;
+      if (!realName) {
+        alert("請填寫真實姓名！");
         return;
       }
-      if (state.isListening) {
-        state.speechRecognition.stop();
-        state.isListening = false;
-      } else {
-        state.speechRecognition.start();
-        state.isListening = true;
-      }
-      updateMicButtonUI();
-    };
-
-    function updateMicButtonUI() {
-      const btn = document.getElementById('micBtn');
-      const label = document.getElementById('micStatusText');
-      if (!btn) return;
-      if (state.isListening) {
-        btn.className = "w-16 h-16 rounded-full bg-duoRed text-white text-2xl flex items-center justify-center animate-bounce shadow-lg mx-auto";
-        if (label) label.innerText = i18n[state.lang].listening;
-      } else {
-        btn.className = "w-16 h-16 rounded-full bg-duoBlue text-white text-2xl flex items-center justify-center btn-blue-3d mx-auto";
-        if (label) label.innerText = i18n[state.lang].speakPrompt;
-      }
-    }
-
-    // -------------------------------------------------------------
-    // PAGE 1: 10-QUESTION QUIZ ENGINE
-    // -------------------------------------------------------------
-    window.startNewQuiz = function() {
-      const shuffled = [...state.questionBank].sort(() => 0.5 - Math.random());
-      state.currentQuiz = shuffled.slice(0, 10);
-      state.currentQuizIndex = 0;
-      state.currentQuizScore = 0;
-      renderCurrentQuizQuestion();
-    };
-
-    function renderCurrentQuizQuestion() {
-      const container = document.getElementById('quizCardContainer');
-      const progress = document.getElementById('quizProgressBar');
-      const progressText = document.getElementById('quizProgressText');
-      const scoreText = document.getElementById('quizScoreText');
-
-      if (state.currentQuizIndex >= state.currentQuiz.length || state.currentQuiz.length === 0) {
-        progress.style.width = '100%';
-        progressText.innerText = `第 10 / 10 題`;
-        finishQuiz();
-        return;
-      }
-
-      const q = state.currentQuiz[state.currentQuizIndex];
-      const pct = (state.currentQuizIndex / 10) * 100;
-      progress.style.width = `${pct}%`;
-      progressText.innerText = `第 ${state.currentQuizIndex + 1} / 10 題`;
-      scoreText.innerText = `目前得分: ${state.currentQuizScore} XP`;
-
-      const isVoiceTest = state.currentQuizIndex % 2 === 1;
-
-      if (!isVoiceTest) {
-        const distractors = state.questionBank
-          .filter(item => item.id !== q.id)
-          .sort(() => 0.5 - Math.random())
-          .slice(0, 3)
-          .map(item => item.ja);
-        
-        const options = [...distractors, q.ja].sort(() => 0.5 - Math.random());
-
-        container.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-black text-duoBlue uppercase tracking-wider">選擇正確的日文解釋</span>
-              <button onclick="speakText('${q.zh}')" class="text-duoBlue hover:text-duoBlueDark flex items-center space-x-1.5 font-bold text-sm bg-duoBlue/10 px-3 py-1.5 rounded-xl">
-                <i class="fa-solid fa-volume-high text-lg"></i>
-                <span>發音朗讀</span>
-              </button>
-            </div>
-            
-            <h3 class="text-4xl font-black text-slate-800 text-center my-6 tracking-wide">${q.zh}</h3>
-            <p class="text-center font-bold text-slate-400 text-sm mb-6">[ ${q.py} ]</p>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
-              ${options.map(opt => `
-                <button onclick="checkMCQAnswer('${opt.replace(/'/g, "\\'")}', '${q.ja.replace(/'/g, "\\'")}')" 
-                  class="w-full text-left p-4 rounded-2xl border-2 border-slate-200 bg-white font-black text-slate-700 hover:border-duoBlue hover:bg-duoBlue/5 transition-all text-sm shadow-sm">
-                  ${opt}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      } else {
-        container.innerHTML = `
-          <div class="text-center my-auto">
-            <span class="text-xs font-black text-duoPurple uppercase tracking-wider mb-2 block">中文口說朗讀挑戰</span>
-            <h3 class="text-3xl font-black text-slate-800 mb-1">${q.ja}</h3>
-            <p class="text-slate-400 font-bold text-sm mb-6">目標唸法："${q.zh}" (${q.py})</p>
-
-            <button id="micBtn" onclick="toggleSpeechListen()" class="w-16 h-16 rounded-full bg-duoBlue text-white text-2xl flex items-center justify-center btn-blue-3d mx-auto">
-              <i class="fa-solid fa-microphone"></i>
-            </button>
-            <p id="micStatusText" class="text-xs font-extrabold text-slate-500 mt-3">${i18n[state.lang].speakPrompt}</p>
-            <p id="spokenResultText" class="text-sm font-black text-duoPurple mt-2 h-6"></p>
-
-            <div class="mt-6">
-              <button onclick="checkMCQAnswer('${q.ja.replace(/'/g, "\\'")}', '${q.ja.replace(/'/g, "\\'")}')" class="text-xs font-bold text-slate-400 underline hover:text-slate-600">
-                跳過 / 標記為正確
-              </button>
-            </div>
-          </div>
-        `;
-      }
-
-      speakText(q.zh);
-    }
-
-    window.checkMCQAnswer = function(selected, correct) {
-      if (selected === correct) {
-        state.currentQuizScore += 10;
-        showFeedback(true);
-      } else {
-        showFeedback(false, correct);
-      }
-    };
-
-    function handleSpokenAnswer(spoken) {
-      const q = state.currentQuiz[state.currentQuizIndex];
-      const resultText = document.getElementById('spokenResultText');
-      if (resultText) resultText.innerText = `識別結果: "${spoken}"`;
-
-      if (spoken.includes(q.zh) || q.zh.includes(spoken)) {
-        state.currentQuizScore += 10;
-        setTimeout(() => showFeedback(true), 600);
-      } else {
-        setTimeout(() => showFeedback(false, q.zh), 600);
-      }
-    }
-
-    function showFeedback(isCorrect, rightAns = "") {
-      const container = document.getElementById('quizCardContainer');
-      if (isCorrect) {
-        speakText("正確！", "zh-CN");
-        container.innerHTML = `
-          <div class="text-center my-auto space-y-4">
-            <div class="w-20 h-20 bg-duoGreen text-white rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg animate-bounce">
-              <i class="fa-solid fa-check"></i>
-            </div>
-            <h3 class="text-3xl font-black text-duoGreen">太棒了！答對了</h3>
-            <p class="text-slate-500 font-bold text-sm">+10 XP 獲得！</p>
-            <button onclick="nextQuestion()" class="btn-green-3d text-white font-black px-8 py-3 rounded-2xl text-sm uppercase tracking-wider">
-              繼續下一題
-            </button>
-          </div>
-        `;
-      } else {
-        speakText("再試一次", "zh-CN");
-        container.innerHTML = `
-          <div class="text-center my-auto space-y-4">
-            <div class="w-20 h-20 bg-duoRed text-white rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg">
-              <i class="fa-solid fa-xmark"></i>
-            </div>
-            <h3 class="text-3xl font-black text-duoRed">答錯了</h3>
-            <p class="text-slate-600 font-bold text-sm">正確答案: <span class="text-slate-800 font-black">${rightAns}</span></p>
-            <button onclick="nextQuestion()" class="btn-red-3d bg-duoRed text-white font-black px-8 py-3 rounded-2xl text-sm uppercase tracking-wider">
-              繼續下一題
-            </button>
-          </div>
-        `;
-      }
-    }
-
-    window.nextQuestion = function() {
-      state.currentQuizIndex++;
-      renderCurrentQuizQuestion();
-    };
-
-    async function finishQuiz() {
-      const isPerfect = state.currentQuizScore === 100;
-      state.userData.xp = (state.userData.xp || 0) + state.currentQuizScore;
-      
-      if (isPerfect) {
-        state.userData.perfectQuizStreak = (state.userData.perfectQuizStreak || 0) + 1;
-      }
-
-      await saveUserDataDB();
-      renderBadges();
-
-      const container = document.getElementById('quizCardContainer');
-      container.innerHTML = `
-        <div class="text-center my-auto space-y-4">
-          <div class="w-24 h-24 bg-duoYellow text-slate-900 rounded-3xl flex items-center justify-center text-5xl mx-auto shadow-xl transform rotate-3">
-            <i class="fa-solid fa-trophy"></i>
-          </div>
-          <h3 class="text-3xl font-black text-slate-800">測驗完成！</h3>
-          <p class="text-slate-600 font-bold text-lg">最終得分: <span class="text-duoGreen font-black text-2xl">${state.currentQuizScore} / 100 XP</span></p>
-          ${isPerfect ? `<p class="text-duoPurple font-black text-sm">🎉 完美滿分！獲得完美通關徽章進度 +1！</p>` : ''}
-          <div class="pt-2">
-            <button onclick="startNewQuiz()" class="btn-green-3d text-white font-black px-8 py-3.5 rounded-2xl text-sm uppercase tracking-wider">
-              再挑戰 10 題測驗
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    // -------------------------------------------------------------
-    // PAGE 2: BADGES & ACHIEVEMENTS SYSTEM (1~1000)
-    // -------------------------------------------------------------
-    const loginMilestones = [1, 3, 7, 14, 30, 60, 100, 365, 500, 1000];
-    const quizMilestones = [1, 5, 10, 25, 50, 100, 250, 500, 750, 1000];
-
-    window.switchBadgeCategory = function(cat) {
-      state.activeBadgeCat = cat;
-      const btnLogin = document.getElementById('badge-cat-login');
-      const btnQuiz = document.getElementById('badge-cat-quiz');
-
-      if (cat === 'login') {
-        btnLogin.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-duoYellow text-slate-900 border-b-4 border-duoYellowDark";
-        btnQuiz.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 text-slate-600 border-b-4 border-slate-300";
-      } else {
-        btnQuiz.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-duoPurple text-white border-b-4 border-duoPurpleDark";
-        btnLogin.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-slate-100 text-slate-600 border-b-4 border-slate-300";
-      }
-      renderBadges();
-    };
-
-    function renderBadges() {
-      const grid = document.getElementById('badgesGrid');
-      const loginCountElem = document.getElementById('badgeLoginDaysCount');
-      const quizCountElem = document.getElementById('badgePerfectQuizCount');
-
-      if (loginCountElem) loginCountElem.innerHTML = `${state.userData.loginStreak || 0} <span class="text-xs font-bold">天</span>`;
-      if (quizCountElem) quizCountElem.innerHTML = `${state.userData.perfectQuizStreak || 0} <span class="text-xs font-bold">次</span>`;
-
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      if (state.activeBadgeCat === 'login') {
-        const currentDays = state.userData.loginStreak || 0;
-        loginMilestones.forEach(m => {
-          const unlocked = currentDays >= m;
-          grid.innerHTML += `
-            <div class="badge-card bg-slate-50 border-2 ${unlocked ? 'border-duoYellow bg-duoYellow/10' : 'border-slate-200'} rounded-3xl p-4 text-center flex flex-col justify-between shadow-sm">
-              <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl ${unlocked ? 'bg-duoYellow text-slate-900 shadow-md' : 'bg-slate-200 text-slate-400'}">
-                <i class="fa-solid ${unlocked ? 'fa-fire' : 'fa-lock'}"></i>
-              </div>
-              <div class="mt-3">
-                <h4 class="font-black text-sm text-slate-800">連續登入 ${m} 天</h4>
-                <p class="text-[11px] font-bold ${unlocked ? 'text-duoYellowDark font-black' : 'text-slate-400'} mt-0.5">
-                  ${unlocked ? '已解鎖 UNLOCKED' : `${currentDays} / ${m} 天`}
-                </p>
-              </div>
-            </div>
-          `;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        const userRef = ref(db, `users/${cred.user.uid}`);
+        await set(userRef, {
+          realName: realName,
+          email: email,
+          loginStreak: 1,
+          correctStreak: 0,
+          lastLogin: new Date().toISOString()
         });
-      } else {
-        const currentStreaks = state.userData.perfectQuizStreak || 0;
-        quizMilestones.forEach(m => {
-          const unlocked = currentStreaks >= m;
-          grid.innerHTML += `
-            <div class="badge-card bg-slate-50 border-2 ${unlocked ? 'border-duoPurple bg-duoPurple/10' : 'border-slate-200'} rounded-3xl p-4 text-center flex flex-col justify-between shadow-sm">
-              <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl ${unlocked ? 'bg-duoPurple text-white shadow-md' : 'bg-slate-200 text-slate-400'}">
-                <i class="fa-solid ${unlocked ? 'fa-award' : 'fa-lock'}"></i>
-              </div>
-              <div class="mt-3">
-                <h4 class="font-black text-sm text-slate-800">完美全勝 ${m} 次</h4>
-                <p class="text-[11px] font-bold ${unlocked ? 'text-duoPurple font-black' : 'text-slate-400'} mt-0.5">
-                  ${unlocked ? '已解鎖 UNLOCKED' : `${currentStreaks} / ${m} 次`}
-                </p>
-              </div>
-            </div>
-          `;
-        });
+        alert("註冊成功！已自動登入。");
+        updateLastSavedTime();
+      } catch (err) {
+        alert("註冊失敗: " + err.message);
       }
-    }
+    };
 
-    // -------------------------------------------------------------
-    // PAGE 3: PLAYER LEADERBOARD & CHART.JS
-    // -------------------------------------------------------------
-    function listenLeaderboardDB() {
-      const lbRef = ref(db, 'leaderboard');
-      onValue(lbRef, (snap) => {
-        let players = [];
+    window.logoutUser = async function() {
+      await signOut(auth);
+    };
+
+    // 載入題庫 (優先從 Firebase讀取，若無則生成 10,000 題的 jatoch.json 預設範本並寫入)
+    window.loadQuestionBankFromDB = async function() {
+      try {
+        const snap = await get(ref(db, "questionBank"));
         if (snap.exists()) {
-          const data = snap.val();
-          players = Object.keys(data).map(key => ({
-            id: key,
-            ...data[key]
-          }));
+          window.questionBank = snap.val();
         } else {
-          players = [
-            { realName: 'Yamada Taro (山田太郎)', xp: 450, loginStreak: 12, perfectQuizStreak: 4 },
-            { realName: 'Tanaka Hana (田中花)', xp: 380, loginStreak: 8, perfectQuizStreak: 3 },
-            { realName: 'Sato Ken (佐藤健)', xp: 220, loginStreak: 5, perfectQuizStreak: 1 }
+          // 生成 10000 題 jatoch.json 初始模擬資料
+          window.questionBank = [];
+          const sampleWords = [
+            { c: "你好", p: "nǐ hǎo", j: "こんにちは" },
+            { c: "謝謝", p: "xièxie", j: "ありがとう" },
+            { c: "再見", p: "zàijiàn", j: "さようなら" },
+            { c: "早安", p: "zǎo ān", j: "おはようございます" },
+            { c: "對不起", p: "duìbuqǐ", j: "すみません" },
+            { c: "沒關係", p: "méiguānxi", j: "どういたしまして" },
+            { c: "請進", p: "qǐng jìn", j: "お入りください" },
+            { c: "多少錢", p: "duōshǎo qián", j: "いくらですか" },
+            { c: "好吃", p: "hǎochī", j: "美味しい" },
+            { c: "我愛你", p: "wǒ ài nǐ", j: "愛しています" }
           ];
+          for (let i = 1; i <= 10000; i++) {
+            const base = sampleWords[(i - 1) % sampleWords.length];
+            window.questionBank.push({
+              id: i,
+              chinese: `${base.c} #${i}`,
+              pinyin: base.p,
+              japanese: `${base.j} (${i})`
+            });
+          }
+          await set(ref(db, "questionBank"), window.questionBank);
         }
+        window.filteredBank = [...window.questionBank];
+        renderBankTable();
+      } catch (err) {
+        console.error("載入題庫錯誤:", err);
+      }
+    };
 
-        players.sort((a, b) => (b.xp || 0) - (a.xp || 0));
-        renderLeaderboardTable(players);
-        renderLeaderboardChart(players);
-      });
-    }
+    // 分頁切換
+    window.switchTab = function(tabNum) {
+      for (let i = 1; i <= 4; i++) {
+        const content = document.getElementById(`tabContent${i}`);
+        const btn = document.getElementById(`tabBtn${i}`);
+        if (content && btn) {
+          if (i === tabNum) {
+            content.classList.remove("hidden");
+            btn.className = "flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold bg-green-500 text-white shadow transition";
+          } else {
+            content.classList.add("hidden");
+            btn.className = "flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+          }
+        }
+      }
+      if (tabNum === 1) startQuiz();
+      if (tabNum === 3) loadLeaderboard();
+      if (tabNum === 4) renderBankTable();
+    };
 
-    function renderLeaderboardTable(players) {
-      const tbody = document.getElementById('leaderboardTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+    // 頁面一：隨機考試引擎 (每次生成10題)
+    window.startQuiz = function() {
+      if (!window.questionBank || window.questionBank.length === 0) return;
+      // 隨機抽選 10 題
+      const shuffled = [...window.questionBank].sort(() => 0.5 - Math.random());
+      window.quizQuestions = shuffled.slice(0, 10);
+      window.currentQuizIndex = 0;
+      loadQuizQuestion();
+    };
 
-      players.forEach((p, index) => {
-        const isTop3 = index < 3;
-        const rankColors = ['bg-duoYellow text-slate-900', 'bg-slate-300 text-slate-800', 'bg-amber-600 text-white'];
-        
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-4 text-center">
-              <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl font-black text-xs ${isTop3 ? rankColors[index] : 'bg-slate-100 text-slate-600'}">
-                ${index + 1}
-              </span>
-            </td>
-            <td class="p-4 font-black text-slate-800 flex items-center space-x-2">
-              <i class="fa-solid fa-circle-user text-slate-400 text-lg"></i>
-              <span>${p.realName || 'Learner'}</span>
-            </td>
-            <td class="p-4 text-center font-black text-duoGreen">${p.xp || 0} XP</td>
-            <td class="p-4 text-center font-extrabold text-duoYellowDark">🔥 ${p.loginStreak || 1} 天</td>
-            <td class="p-4 text-center font-extrabold text-duoPurple">🏆 ${p.perfectQuizStreak || 0} 次</td>
-          </tr>
+    window.loadQuizQuestion = function() {
+      if (window.currentQuizIndex >= window.quizQuestions.length) {
+        document.getElementById("quizCardContainer").innerHTML = `
+          <div class="text-2xl font-black text-green-600 mb-2">🎉 恭喜完成 10 道漢語測驗！</div>
+          <p class="text-sm text-slate-600 mb-4">您的連續答題成功次數已更新！</p>
+          <button onclick="startQuiz()" class="px-6 py-3 bg-green-500 text-white font-bold rounded-xl btn-3d">再次挑戰</button>
         `;
-      });
-    }
-
-    function renderLeaderboardChart(players) {
-      const ctx = document.getElementById('leaderboardChart')?.getContext('2d');
-      if (!ctx) return;
-
-      const labels = players.slice(0, 8).map(p => p.realName || 'Player');
-      const xpData = players.slice(0, 8).map(p => p.xp || 0);
-      const streakData = players.slice(0, 8).map(p => p.loginStreak || 1);
-
-      if (state.leaderboardChart) {
-        state.leaderboardChart.destroy();
+        document.getElementById("quizOptions").innerHTML = "";
+        document.getElementById("nextQuizBtn").classList.add("hidden");
+        return;
       }
 
-      state.leaderboardChart = new Chart(ctx, {
-        type: 'bar',
+      window.currentQuizQuestion = window.quizQuestions[window.currentQuizIndex];
+      document.getElementById("quizProgressBadge").textContent = `第 ${window.currentQuizIndex + 1} 題 / 共 10 題`;
+      document.getElementById("quizPrompt").textContent = window.currentQuizQuestion.chinese;
+      document.getElementById("quizSubPrompt").textContent = `拼音: ${window.currentQuizQuestion.pinyin} | 請選出正確的日文含義`;
+      document.getElementById("quizFeedback").textContent = "";
+      document.getElementById("nextQuizBtn").classList.add("hidden");
+
+      // 產生 4 個選項 (1個正確，3個干擾項)
+      const correctAns = window.currentQuizQuestion.japanese;
+      const others = window.questionBank
+        .filter(q => q.japanese !== correctAns)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3)
+        .map(q => q.japanese);
+      const options = [...others, correctAns].sort(() => 0.5 - Math.random());
+
+      const optContainer = document.getElementById("quizOptions");
+      optContainer.innerHTML = "";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "p-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 hover:border-green-500 hover:bg-green-50 transition text-left shadow-sm flex justify-between items-center";
+        btn.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-chevron-right text-slate-300"></i>`;
+        btn.onclick = () => checkQuizAnswer(opt, correctAns, btn);
+        optContainer.appendChild(btn);
+      });
+    };
+
+    window.checkQuizAnswer = async function(selected, correct, btnEl) {
+      const allBtns = document.querySelectorAll("#quizOptions button");
+      allBtns.forEach(b => b.disabled = true);
+
+      const feedbackEl = document.getElementById("quizFeedback");
+      if (selected === correct) {
+        btnEl.classList.add("border-green-500", "bg-green-100", "text-green-800");
+        feedbackEl.innerHTML = `<span class="text-green-600"><i class="fa-solid fa-circle-check mr-1"></i> 回答正確！正解是 ${correct}</span>`;
+        window.correctStreak++;
+        if (window.currentUser) {
+          await update(ref(db, `users/${window.currentUser.uid}`), { correctStreak: window.correctStreak });
+        }
+      } else {
+        btnEl.classList.add("border-red-500", "bg-red-100", "text-red-800");
+        feedbackEl.innerHTML = `<span class="text-red-600"><i class="fa-solid fa-circle-xmark mr-1"></i> 答錯了。正確答案為: ${correct}</span>`;
+        window.correctStreak = 0;
+      }
+      document.getElementById("nextQuizBtn").classList.remove("hidden");
+      renderBadges();
+      updateLastSavedTime();
+    };
+
+    window.nextQuizQuestion = function() {
+      window.currentQuizIndex++;
+      loadQuizQuestion();
+    };
+
+    // 語音朗讀功能 (TTS)
+    window.speakText = function(txt) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(txt);
+        utterance.lang = 'zh-CN';
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("您的瀏覽器不支援語音朗讀功能");
+      }
+    };
+
+    // 頁面二：動態渲染 1~1000 次連續登入與答題徽章
+    window.renderBadges = function() {
+      const loginGrid = document.getElementById("loginBadgesGrid");
+      const quizGrid = document.getElementById("quizBadgesGrid");
+      if (!loginGrid || !quizGrid) return;
+
+      document.getElementById("loginStreakCount").textContent = `${window.loginStreak} 天`;
+      document.getElementById("quizStreakCount").textContent = `${window.correctStreak} 次`;
+
+      loginGrid.innerHTML = "";
+      quizGrid.innerHTML = "";
+
+      // 為了效能，每 10 檔展示重要里程碑或完整 1~1000 迴圈
+      for (let i = 1; i <= 1000; i += (i > 100 ? 50 : 1)) {
+        const unlocked = i <= window.loginStreak;
+        const lDiv = document.createElement("div");
+        lDiv.className = `p-2 rounded-xl text-center border text-xs font-bold flex flex-col items-center justify-center ${unlocked ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-300'}`;
+        lDiv.innerHTML = `<i class="fa-solid fa-medal text-base mb-1 ${unlocked ? 'text-amber-500' : 'text-slate-300'}"></i><span>${i}天</span>`;
+        loginGrid.appendChild(lDiv);
+
+        const qUnlocked = i <= window.correctStreak;
+        const qDiv = document.createElement("div");
+        qDiv.className = `p-2 rounded-xl text-center border text-xs font-bold flex flex-col items-center justify-center ${qUnlocked ? 'bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-300'}`;
+        qDiv.innerHTML = `<i class="fa-solid fa-bolt text-base mb-1 ${qUnlocked ? 'text-yellow-500' : 'text-slate-300'}"></i><span>${i}次</span>`;
+        quizGrid.appendChild(qDiv);
+      }
+    };
+
+    // 頁面三：玩家排行榜與分析圖表
+    window.loadLeaderboard = async function() {
+      const listEl = document.getElementById("leaderboardList");
+      if (!listEl) return;
+      try {
+        const snap = await get(ref(db, "users"));
+        if (snap.exists()) {
+          const usersObj = snap.val();
+          const usersArr = Object.values(usersObj).sort((a, b) => (b.correctStreak || 0) - (a.correctStreak || 0));
+          listEl.innerHTML = "";
+          usersArr.forEach((u, idx) => {
+            const item = document.createElement("div");
+            item.className = "flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200";
+            item.innerHTML = `
+              <div class="flex items-center gap-3">
+                <span class="w-6 h-6 rounded-full bg-green-500 text-white font-bold text-xs flex items-center justify-center">${idx + 1}</span>
+                <span class="font-bold text-slate-700 text-sm">${u.realName || '匿名玩家'}</span>
+              </div>
+              <div class="flex items-center gap-3 text-xs font-bold">
+                <span class="text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg">登入: ${u.loginStreak || 1}天</span>
+                <span class="text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-lg">答對: ${u.correctStreak || 0}次</span>
+              </div>
+            `;
+            listEl.appendChild(item);
+          });
+        }
+      } catch (err) {
+        console.error("載入排行榜失敗:", err);
+      }
+    };
+
+    window.initChart = function() {
+      const ctx = document.getElementById("performanceChart");
+      if (!ctx) return;
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
         data: {
-          labels: labels,
-          datasets: [
-            {
-              label: '總 XP 經驗值',
-              data: xpData,
-              backgroundColor: '#58cc02',
-              borderRadius: 8
-            },
-            {
-              label: '連續登入天數',
-              data: streakData,
-              backgroundColor: '#ffc800',
-              borderRadius: 8
-            }
-          ]
+          labels: ['答題成功次數', '連續登入天數', '待解鎖成就'],
+          datasets: [{
+            data: [window.correctStreak, window.loginStreak, Math.max(0, 1000 - window.correctStreak)],
+            backgroundColor: ['#22c55e', '#f59e0b', '#e2e8f0'],
+            borderWidth: 2
+          }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { labels: { font: { family: 'Nunito', weight: 'bold' } } }
-          },
-          scales: {
-            x: { ticks: { font: { family: 'Nunito', weight: 'bold' } } },
-            y: { ticks: { font: { family: 'Nunito', weight: 'bold' } } }
+            legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 12 } } }
           }
         }
       });
-    }
+    };
 
-    // -------------------------------------------------------------
-    // PAGE 4: QUESTION BANK & SEARCH
-    // -------------------------------------------------------------
-    window.renderQuestionBank = function() {
-      const tbody = document.getElementById('bankTableBody');
-      const query = document.getElementById('bankSearchInput')?.value.toLowerCase().trim() || '';
+    // 頁面四：題庫總覽 (支援 10,000 題、下拉跳頁與捲動載入)
+    window.renderBankTable = function() {
+      const tbody = document.getElementById("bankTableBody");
+      const pageSelect = document.getElementById("pageRangeSelect");
       if (!tbody) return;
 
-      const filtered = state.questionBank.filter(item => 
-        (item.zh && item.zh.toLowerCase().includes(query)) ||
-        (item.py && item.py.toLowerCase().includes(query)) ||
-        (item.ja && item.ja.toLowerCase().includes(query))
-      );
+      const items = window.filteredBank || window.questionBank || [];
+      const pageSize = 100;
+      const totalPages = Math.ceil(items.length / pageSize) || 1;
 
-      tbody.innerHTML = '';
-      filtered.forEach(item => {
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-4 font-black text-slate-800 text-base">${item.zh}</td>
-            <td class="p-4 font-bold text-slate-500">${item.py || ''}</td>
-            <td class="p-4 font-bold text-slate-700">${item.ja}</td>
-            <td class="p-4 text-center">
-              <button onclick="speakText('${item.zh}')" class="w-9 h-9 rounded-xl bg-duoBlue/10 text-duoBlue hover:bg-duoBlue hover:text-white flex items-center justify-center mx-auto transition-all">
-                <i class="fa-solid fa-volume-high"></i>
-              </button>
-            </td>
-            <td class="p-4 text-center">
-              <button onclick="deleteQuestionItem('${item.id}')" class="text-slate-400 hover:text-duoRed text-sm">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </td>
-          </tr>
+      // 產生跳至區間下拉選單
+      if (pageSelect && pageSelect.children.length === 0) {
+        pageSelect.innerHTML = "";
+        for (let i = 0; i < totalPages; i++) {
+          const start = i * pageSize + 1;
+          const end = Math.min((i + 1) * pageSize, items.length);
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = `第 ${start} - ${end} 題`;
+          pageSelect.appendChild(opt);
+        }
+      }
+
+      // 渲染前 window.displayLimit 筆項目 (無窮捲動累積)
+      const currentList = items.slice(0, window.displayLimit);
+      tbody.innerHTML = "";
+      currentList.forEach((q, idx) => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="p-3 text-xs font-bold text-slate-400">${q.id || idx + 1}</td>
+          <td class="p-3 font-bold text-slate-800">${q.chinese}</td>
+          <td class="p-3 text-slate-600">${q.pinyin}</td>
+          <td class="p-3 text-slate-600">${q.japanese}</td>
+          <td class="p-3 text-center">
+            <button onclick="editQuestion(${q.id})" class="text-blue-600 hover:text-blue-800 mr-2 text-xs font-bold"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteQuestion(${q.id})" class="text-rose-600 hover:text-rose-800 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
+          </td>
         `;
+        tbody.appendChild(tr);
       });
     };
 
-    window.handleAddQuestion = async function(e) {
-      e.preventDefault();
-      const zh = document.getElementById('addZh').value.trim();
-      const py = document.getElementById('addPy').value.trim();
-      const ja = document.getElementById('addJa').value.trim();
-
-      const bankRef = ref(db, 'questionBank');
-      await push(bankRef, { zh, py, ja });
-
-      updateSavedTimestamp();
-      closeAddQuestionModal();
+    // 區間下拉跳頁
+    window.jumpToBankRange = function(pageIndex) {
+      const pageSize = 100;
+      window.displayLimit = (parseInt(pageIndex) + 1) * pageSize;
+      renderBankTable();
+      const container = document.getElementById("bankTableScrollContainer");
+      if (container) container.scrollTop = 0;
     };
 
-    // EXCEL IMPORT FUNCTION
-    window.importBankExcel = function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet);
-
-        const bankRef = ref(db, 'questionBank');
-        for (let row of json) {
-          if (row.zh || row.Chinese) {
-            await push(bankRef, {
-              zh: row.zh || row.Chinese || '',
-              py: row.py || row.Pinyin || '',
-              ja: row.ja || row.Japanese || ''
-            });
-          }
+    // 下拉捲動載入更多 (Infinite Scroll)
+    window.handleBankScroll = function(el) {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
+        if (window.displayLimit < (window.filteredBank || window.questionBank).length) {
+          window.displayLimit += 100;
+          renderBankTable();
         }
-        updateSavedTimestamp();
-        alert("Excel 題庫匯入成功！");
+      }
+    };
+
+    // 關鍵字搜尋題庫
+    window.filterBankData = function(keyword) {
+      const kw = keyword.toLowerCase();
+      window.filteredBank = window.questionBank.filter(q => 
+        q.chinese.toLowerCase().includes(kw) || 
+        q.pinyin.toLowerCase().includes(kw) || 
+        q.japanese.toLowerCase().includes(kw)
+      );
+      window.displayLimit = 100;
+      renderBankTable();
+    };
+
+    // 新增 / 編輯 Modal 操控
+    window.openAddQuestionModal = function() {
+      document.getElementById("editQuestionIndex").value = "";
+      document.getElementById("modalChinese").value = "";
+      document.getElementById("modalPinyin").value = "";
+      document.getElementById("modalJapanese").value = "";
+      document.getElementById("questionModal").classList.remove("hidden");
+    };
+
+    window.closeModal = function() {
+      document.getElementById("questionModal").classList.add("hidden");
+    };
+
+    window.saveQuestionItem = async function(e) {
+      e.preventDefault();
+      const idVal = document.getElementById("editQuestionIndex").value;
+      const c = document.getElementById("modalChinese").value;
+      const p = document.getElementById("modalPinyin").value;
+      const j = document.getElementById("modalJapanese").value;
+
+      if (idVal !== "") {
+        const idx = window.questionBank.findIndex(item => item.id == idVal);
+        if (idx !== -1) {
+          window.questionBank[idx] = { id: parseInt(idVal), chinese: c, pinyin: p, japanese: j };
+        }
+      } else {
+        const newId = window.questionBank.length > 0 ? Math.max(...window.questionBank.map(q => q.id || 0)) + 1 : 1;
+        window.questionBank.unshift({ id: newId, chinese: c, pinyin: p, japanese: j });
+      }
+
+      await set(ref(db, "questionBank"), window.questionBank);
+      window.filteredBank = [...window.questionBank];
+      renderBankTable();
+      closeModal();
+      updateLastSavedTime();
+      alert("題目儲存成功，並即時同步至 Firebase Realtime Database！");
+    };
+
+    window.editQuestion = function(id) {
+      const item = window.questionBank.find(q => q.id === id);
+      if (!item) return;
+      document.getElementById("editQuestionIndex").value = item.id;
+      document.getElementById("modalChinese").value = item.chinese;
+      document.getElementById("modalPinyin").value = item.pinyin;
+      document.getElementById("modalJapanese").value = item.japanese;
+      document.getElementById("questionModal").classList.remove("hidden");
+    };
+
+    window.deleteQuestion = async function(id) {
+      if (confirm("確定要刪除此題目嗎？")) {
+        window.questionBank = window.questionBank.filter(q => q.id !== id);
+        await set(ref(db, "questionBank"), window.questionBank);
+        window.filteredBank = [...window.questionBank];
+        renderBankTable();
+        updateLastSavedTime();
+      }
+    };
+
+    // Excel 匯出與匯入功能
+    window.exportToExcel = function() {
+      const data = window.questionBank.map(q => ({
+        "編號": q.id,
+        "漢語": q.chinese,
+        "拼音": q.pinyin,
+        "日文含義": q.japanese
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "QuestionBank");
+      XLSX.writeFile(wb, "jatoch_question_bank.xlsx");
+    };
+
+    window.importFromExcel = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+          
+          window.questionBank = rows.map((r, i) => ({
+            id: r["編號"] || i + 1,
+            chinese: r["漢語"] || r["Chinese"] || "",
+            pinyin: r["拼音"] || r["Pinyin"] || "",
+            japanese: r["日文含義"] || r["Japanese"] || ""
+          }));
+
+          await set(ref(db, "questionBank"), window.questionBank);
+          window.filteredBank = [...window.questionBank];
+          renderBankTable();
+          updateLastSavedTime();
+          alert(`成功匯入 ${window.questionBank.length} 筆題庫並同步至資料庫！`);
+        } catch (err) {
+          alert("匯入 Excel 失敗: " + err.message);
+        }
       };
       reader.readAsArrayBuffer(file);
     };
 
-    // -------------------------------------------------------------
-    // EXPORT TOOLS (EXCEL, PNG, PDF)
-    // -------------------------------------------------------------
-    window.exportLeaderboardExcel = function() {
-      const data = state.questionBank.map(item => ({
-        "中文 (漢字)": item.zh,
-        "拼音 (Pinyin)": item.py,
-        "日文 (日本語)": item.ja
-      }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "jatoch Question Bank");
-      XLSX.writeFile(wb, "jatoch_Chinese_Bank.xlsx");
-    };
-
-    window.exportBankExcel = function() {
-      exportLeaderboardExcel();
-    };
-
-    window.exportCurrentTabPNG = function() {
-      const activeTab = document.querySelector('main > section:not(.hidden)');
-      if (!activeTab) return;
-
-      html2canvas(activeTab, { scale: 2 }).then(canvas => {
+    // PNG / PDF 匯出功能
+    window.exportPagePNG = function() {
+      html2canvas(document.body).then(canvas => {
         const link = document.createElement('a');
-        link.download = `Duolingo_Learn_Chinese_${Date.now()}.png`;
+        link.download = 'jatoch_learning_report.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
       });
     };
 
-    window.exportCurrentTabPDF = function() {
-      const activeTab = document.querySelector('main > section:not(.hidden)');
-      if (!activeTab) return;
-
+    window.exportPagePDF = async function() {
       const { jsPDF } = window.jspdf;
-      html2canvas(activeTab, { scale: 2 }).then(canvas => {
+      html2canvas(document.body).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgWidth = 210;
@@ -1530,88 +1007,21 @@
 
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-
         while (heightLeft >= 0) {
           position = heightLeft - imgHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
           heightLeft -= pageHeight;
         }
-
-        pdf.save(`Duolingo_Learn_Chinese_${Date.now()}.pdf`);
+        pdf.save('jatoch_learning_report.pdf');
       });
     };
 
-    // -------------------------------------------------------------
-    // NAVIGATION & UI SWITCHING
-    // -------------------------------------------------------------
-    window.switchTab = function(tabName) {
-      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all text-slate-600 hover:bg-slate-100";
-      });
-
-      const activeSec = document.getElementById(`tab-content-${tabName}`);
-      const activeNav = document.getElementById(`nav-${tabName}`);
-
-      if (activeSec) activeSec.classList.remove('hidden');
-      if (activeNav) {
-        activeNav.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wide transition-all bg-duoGreen text-white shadow-sm";
-      }
-    };
-
-    window.setLanguage = function(lang) {
-      state.lang = lang;
-      ['ja', 'zh', 'en'].forEach(l => {
-        const b = document.getElementById(`lang-${l}`);
-        if (b) {
-          if (l === lang) {
-            b.className = "px-2.5 py-1 text-xs font-black rounded-lg transition-all bg-white text-duoGreen shadow-sm";
-          } else {
-            b.className = "px-2.5 py-1 text-xs font-black rounded-lg transition-all text-slate-600 hover:text-slate-900";
-          }
-        }
-      });
-      updateUIRender();
-    };
-
-    function updateUIRender() {
-      document.querySelectorAll('[data-i18n]').forEach(elem => {
-        const key = elem.getAttribute('data-i18n');
-        if (i18n[state.lang] && i18n[state.lang][key]) {
-          elem.innerText = i18n[state.lang][key];
-        }
-      });
-      renderBadges();
-      renderQuestionBank();
+    function updateLastSavedTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString();
+      document.getElementById("lastSavedTime").textContent = `上次儲存: ${timeStr}`;
     }
-
-    // MODAL TOGGLES
-    window.openAuthModal = () => document.getElementById('authModal').classList.remove('hidden');
-    window.closeAuthModal = () => document.getElementById('authModal').classList.add('hidden');
-    window.openJatochModal = () => document.getElementById('jatochModal').classList.remove('hidden');
-    window.closeJatochModal = () => document.getElementById('jatochModal').classList.add('hidden');
-    window.openAddQuestionModal = () => document.getElementById('addQuestionModal').classList.remove('hidden');
-    window.closeAddQuestionModal = () => document.getElementById('addQuestionModal').classList.add('hidden');
-
-    window.switchAuthTab = (type) => {
-      const signupForm = document.getElementById('signUpForm');
-      const signinForm = document.getElementById('signInForm');
-      const tabSignUp = document.getElementById('authTabSignUp');
-      const tabSignIn = document.getElementById('authTabSignIn');
-
-      if (type === 'signup') {
-        signupForm.classList.remove('hidden');
-        signinForm.classList.add('hidden');
-        tabSignUp.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-duoGreen text-duoGreen";
-        tabSignIn.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-transparent text-slate-400";
-      } else {
-        signinForm.classList.remove('hidden');
-        signupForm.classList.add('hidden');
-        tabSignIn.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-duoBlue text-duoBlue";
-        tabSignUp.className = "flex-1 pb-3 text-center font-black text-base border-b-4 border-transparent text-slate-400";
-      }
-    };
   </script>
 </body>
 </html>
