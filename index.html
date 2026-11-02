@@ -145,7 +145,7 @@
         </div>
       </div>
 
-      <!-- 頁面一：隨機考試題庫 (自動淨化文字，不顯示 # 與數字) -->
+      <!-- 頁面一：隨機考試題庫 -->
       <div id="tabContent1" class="tab-content space-y-4">
         <div class="bg-white duo-card p-6 md:p-8">
           <div class="flex justify-between items-center mb-6">
@@ -153,7 +153,7 @@
               <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full" id="quizProgressBadge">第 1 題 / 共 10 題</span>
               <h3 class="text-xl font-black text-slate-800 mt-2" data-i18n="quizHeader">日本語對應漢語測驗</h3>
             </div>
-            <button onclick="speakText(currentQuizQuestion?.rawChinese || '請聽語音')" class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-xl hover:bg-sky-200 transition shadow">
+            <button onclick="speakText(currentQuizQuestion?.chinese || '請聽語音')" class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-xl hover:bg-sky-200 transition shadow">
               <i class="fa-solid fa-volume-high"></i>
             </button>
           </div>
@@ -200,7 +200,7 @@
               </h3>
               <span id="quizStreakCount" class="bg-yellow-100 text-yellow-700 font-black px-3 py-1 rounded-full text-sm">0 次</span>
             </div>
-            <p class="text-xs text-slate-500 mb-4" data-i18n="quizStreakDesc">在考試中累積答題成功次數解鎖專屬頭銜！</p>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="quizStreakDesc">在考試中連續答對累積答題成功次數！</p>
             <div id="quizBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl"></div>
           </div>
         </div>
@@ -332,10 +332,16 @@
     window.currentLang = 'zh';
     let chartInstance = null;
 
-    // 清理字串函式：移除 #, 數字, 括號及其內容，讓題目與答案完美乾淨
+    // 核心資料清理器：強制過濾字串中的 #, 數字, 半形括號 (), 全形括號 （）
     window.cleanText = function(text) {
       if (!text) return "";
-      return text.replace(/#\d+/g, '').replace(/\s*\([^)]*\)/g, '').trim();
+      return String(text)
+        .replace(/#\d+/g, '')              // 移除 #1234
+        .replace(/#\s*/g, '')              // 移除單獨的 #
+        .replace(/\s*\([^)]*\)/g, '')       // 移除半形 (1234)
+        .replace(/\s*（[^）]*）/g, '')       // 移除全形 （1234）
+        .replace(/\d+/g, '')               // 徹底清除所有孤立數字
+        .trim();
     };
 
     const i18n = {
@@ -556,32 +562,40 @@
       await signOut(auth);
     };
 
+    // 載入題庫，並自動清洗乾淨所有含有數字與符號的舊項目
     window.loadQuestionBankFromDB = async function() {
       try {
         const snap = await get(ref(db, "questionBank"));
-        if (snap.exists()) {
-          window.questionBank = snap.val();
+        const sampleWords = [
+          { c: "你好", p: "nǐ hǎo", j: "こんにちは" },
+          { c: "謝謝", p: "xièxie", j: "ありがとう" },
+          { c: "再見", p: "zàijiàn", j: "さようなら" },
+          { c: "早安", p: "zǎo ān", j: "おはようございます" },
+          { c: "對不起", p: "duìbuqǐ", j: "すみません" },
+          { c: "沒關係", p: "méiguānxi", j: "どういたしまして" },
+          { c: "請進", p: "qǐng jìn", j: "お入りください" },
+          { c: "多少錢", p: "duōshǎo qián", j: "いくらですか" },
+          { c: "好吃", p: "hǎochī", j: "美味しい" },
+          { c: "我愛你", p: "wǒ ài nǐ", j: "愛しています" }
+        ];
+
+        if (snap.exists() && Array.isArray(snap.val()) && snap.val().length > 0) {
+          // 清洗並淨化已儲存於 Firebase 的題庫資料
+          window.questionBank = snap.val().map(q => ({
+            ...q,
+            chinese: window.cleanText(q.chinese),
+            japanese: window.cleanText(q.japanese)
+          }));
         } else {
+          // 生成純淨的預設 10,000 題
           window.questionBank = [];
-          const sampleWords = [
-            { c: "你好", p: "nǐ hǎo", j: "こんにちは" },
-            { c: "謝謝", p: "xièxie", j: "ありがとう" },
-            { c: "再見", p: "zàijiàn", j: "さようなら" },
-            { c: "早安", p: "zǎo ān", j: "おはようございます" },
-            { c: "對不起", p: "duìbuqǐ", j: "すみません" },
-            { c: "沒關係", p: "méiguānxi", j: "どういたしまして" },
-            { c: "請進", p: "qǐng jìn", j: "お入りください" },
-            { c: "多少錢", p: "duōshǎo qián", j: "いくらですか" },
-            { c: "好吃", p: "hǎochī", j: "美味しい" },
-            { c: "我愛你", p: "wǒ ài nǐ", j: "愛しています" }
-          ];
           for (let i = 1; i <= 10000; i++) {
             const base = sampleWords[(i - 1) % sampleWords.length];
             window.questionBank.push({
               id: i,
-              chinese: `${base.c} #${i}`,
+              chinese: base.c,
               pinyin: base.p,
-              japanese: `${base.j} (${i})`
+              japanese: base.j
             });
           }
           await set(ref(db, "questionBank"), window.questionBank);
@@ -612,7 +626,7 @@
       if (tabNum === 4) renderBankTable();
     };
 
-    // 頁面一：隨機考試引擎 (套用 cleanText 移除 # 與數字、括號)
+    // 頁面一：測驗載入
     window.startQuiz = function() {
       if (!window.questionBank || window.questionBank.length === 0) return;
       const shuffled = [...window.questionBank].sort(() => 0.5 - Math.random());
@@ -633,28 +647,29 @@
         return;
       }
 
-      window.currentQuizQuestion = window.quizQuestions[window.currentQuizIndex];
-      // 保留未清理的中文供語音朗讀用，顯示時則利用 cleanText 移除數字與 #
-      window.currentQuizQuestion.rawChinese = window.currentQuizQuestion.chinese;
-      
-      const cleanPromptText = window.cleanText(window.currentQuizQuestion.chinese);
+      const rawQ = window.quizQuestions[window.currentQuizIndex];
+      // 確保題目文字經過 cleanText 雙重過濾
+      window.currentQuizQuestion = {
+        ...rawQ,
+        chinese: window.cleanText(rawQ.chinese),
+        japanese: window.cleanText(rawQ.japanese)
+      };
 
       document.getElementById("quizProgressBadge").textContent = `第 ${window.currentQuizIndex + 1} 題 / 共 10 題`;
-      document.getElementById("quizPrompt").textContent = cleanPromptText;
+      document.getElementById("quizPrompt").textContent = window.currentQuizQuestion.chinese;
       document.getElementById("quizSubPrompt").textContent = `拼音: ${window.currentQuizQuestion.pinyin} | 請選出正確的日文含義`;
       document.getElementById("quizFeedback").textContent = "";
       document.getElementById("nextQuizBtn").classList.add("hidden");
 
-      const correctAnsClean = window.cleanText(window.currentQuizQuestion.japanese);
+      const correctAns = window.currentQuizQuestion.japanese;
       
-      // 取得其他選項並清理掉數字與括號
-      const others = window.questionBank
-        .filter(q => window.cleanText(q.japanese) !== correctAnsClean)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 3)
-        .map(q => window.cleanText(q.japanese));
+      // 隨機抽 3 個干擾選項並清洗文字
+      const rawOthers = window.questionBank
+        .map(q => window.cleanText(q.japanese))
+        .filter(j => j !== correctAns);
       
-      const options = [...others, correctAnsClean].sort(() => 0.5 - Math.random());
+      const uniqueOthers = [...new Set(rawOthers)].sort(() => 0.5 - Math.random()).slice(0, 3);
+      const options = [...uniqueOthers, correctAns].sort(() => 0.5 - Math.random());
 
       const optContainer = document.getElementById("quizOptions");
       optContainer.innerHTML = "";
@@ -662,7 +677,7 @@
         const btn = document.createElement("button");
         btn.className = "p-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 hover:border-green-500 hover:bg-green-50 transition text-left shadow-sm flex justify-between items-center";
         btn.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-chevron-right text-slate-300"></i>`;
-        btn.onclick = () => checkQuizAnswer(opt, correctAnsClean, btn);
+        btn.onclick = () => checkQuizAnswer(opt, correctAns, btn);
         optContainer.appendChild(btn);
       });
     };
@@ -696,7 +711,6 @@
 
     window.speakText = function(txt) {
       if ('speechSynthesis' in window) {
-        // 朗讀前同樣清理掉 # 與數字
         const cleanToSpeak = window.cleanText(txt);
         const utterance = new SpeechSynthesisUtterance(cleanToSpeak);
         utterance.lang = 'zh-CN';
@@ -810,13 +824,15 @@
       const currentList = items.slice(0, window.displayLimit);
       tbody.innerHTML = "";
       currentList.forEach((q, idx) => {
+        const cleanC = window.cleanText(q.chinese);
+        const cleanJ = window.cleanText(q.japanese);
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
         tr.innerHTML = `
           <td class="p-3 text-xs font-bold text-slate-400">${q.id || idx + 1}</td>
-          <td class="p-3 font-bold text-slate-800">${q.chinese}</td>
+          <td class="p-3 font-bold text-slate-800">${cleanC}</td>
           <td class="p-3 text-slate-600">${q.pinyin}</td>
-          <td class="p-3 text-slate-600">${q.japanese}</td>
+          <td class="p-3 text-slate-600">${cleanJ}</td>
           <td class="p-3 text-center">
             <button onclick="editQuestion(${q.id})" class="text-blue-600 hover:text-blue-800 mr-2 text-xs font-bold"><i class="fa-solid fa-pen"></i></button>
             <button onclick="deleteQuestion(${q.id})" class="text-rose-600 hover:text-rose-800 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>
@@ -846,9 +862,9 @@
     window.filterBankData = function(keyword) {
       const kw = keyword.toLowerCase();
       window.filteredBank = window.questionBank.filter(q => 
-        q.chinese.toLowerCase().includes(kw) || 
+        window.cleanText(q.chinese).toLowerCase().includes(kw) || 
         q.pinyin.toLowerCase().includes(kw) || 
-        q.japanese.toLowerCase().includes(kw)
+        window.cleanText(q.japanese).toLowerCase().includes(kw)
       );
       window.displayLimit = 100;
       renderBankTable();
@@ -869,9 +885,9 @@
     window.saveQuestionItem = async function(e) {
       e.preventDefault();
       const idVal = document.getElementById("editQuestionIndex").value;
-      const c = document.getElementById("modalChinese").value;
+      const c = window.cleanText(document.getElementById("modalChinese").value);
       const p = document.getElementById("modalPinyin").value;
-      const j = document.getElementById("modalJapanese").value;
+      const j = window.cleanText(document.getElementById("modalJapanese").value);
 
       if (idVal !== "") {
         const idx = window.questionBank.findIndex(item => item.id == idVal);
@@ -895,9 +911,9 @@
       const item = window.questionBank.find(q => q.id === id);
       if (!item) return;
       document.getElementById("editQuestionIndex").value = item.id;
-      document.getElementById("modalChinese").value = item.chinese;
+      document.getElementById("modalChinese").value = window.cleanText(item.chinese);
       document.getElementById("modalPinyin").value = item.pinyin;
-      document.getElementById("modalJapanese").value = item.japanese;
+      document.getElementById("modalJapanese").value = window.cleanText(item.japanese);
       document.getElementById("questionModal").classList.remove("hidden");
     };
 
@@ -914,9 +930,9 @@
     window.exportToExcel = function() {
       const data = window.questionBank.map(q => ({
         "編號": q.id,
-        "漢語": q.chinese,
+        "漢語": window.cleanText(q.chinese),
         "拼音": q.pinyin,
-        "日文含義": q.japanese
+        "日文含義": window.cleanText(q.japanese)
       }));
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -937,9 +953,9 @@
           
           window.questionBank = rows.map((r, i) => ({
             id: r["編號"] || i + 1,
-            chinese: r["漢語"] || r["Chinese"] || "",
+            chinese: window.cleanText(r["漢語"] || r["Chinese"] || ""),
             pinyin: r["拼音"] || r["Pinyin"] || "",
-            japanese: r["日文含義"] || r["Japanese"] || ""
+            japanese: window.cleanText(r["日文含義"] || r["Japanese"] || "")
           }));
 
           await set(ref(db, "questionBank"), window.questionBank);
