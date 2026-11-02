@@ -78,7 +78,7 @@
   <!-- 主內容區 -->
   <main class="max-w-6xl mx-auto px-4 mt-6">
 
-    <!-- 登入 / 註冊頁面 (若未登入時顯示) -->
+    <!-- 登入 / 註冊頁面 -->
     <div id="authView" class="max-w-md mx-auto bg-white duo-card p-8 mt-10">
       <div class="text-center mb-6">
         <h2 class="text-2xl font-black text-slate-800" data-i18n="authTitle">玩家登入 / 註冊</h2>
@@ -145,7 +145,7 @@
         </div>
       </div>
 
-      <!-- 頁面一：隨機考試題庫 (Duolingo 風格) -->
+      <!-- 頁面一：隨機考試題庫 (自動淨化文字，不顯示 # 與數字) -->
       <div id="tabContent1" class="tab-content space-y-4">
         <div class="bg-white duo-card p-6 md:p-8">
           <div class="flex justify-between items-center mb-6">
@@ -153,7 +153,7 @@
               <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full" id="quizProgressBadge">第 1 題 / 共 10 題</span>
               <h3 class="text-xl font-black text-slate-800 mt-2" data-i18n="quizHeader">日本語對應漢語測驗</h3>
             </div>
-            <button onclick="speakText(currentQuizQuestion?.chinese || '請聽語音')" class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-xl hover:bg-sky-200 transition shadow">
+            <button onclick="speakText(currentQuizQuestion?.rawChinese || '請聽語音')" class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-xl hover:bg-sky-200 transition shadow">
               <i class="fa-solid fa-volume-high"></i>
             </button>
           </div>
@@ -179,10 +179,9 @@
         </div>
       </div>
 
-      <!-- 頁面二：連續登入與徽章系統 (1~1000次) -->
+      <!-- 頁面二：連續登入與徽章系統 -->
       <div id="tabContent2" class="tab-content hidden space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- 連續登入卡片 -->
           <div class="bg-white duo-card p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
@@ -190,13 +189,10 @@
               </h3>
               <span id="loginStreakCount" class="bg-amber-100 text-amber-700 font-black px-3 py-1 rounded-full text-sm">1 天</span>
             </div>
-            <p class="text-xs text-slate-500 mb-4" data-i18n="loginStreakDesc">每日登入即可解鎖對應天數的榮譽徽章！最高解鎖至 1000 天。</p>
-            <div id="loginBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl">
-              <!-- 動態渲染 1~1000 登入徽章 -->
-            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="loginStreakDesc">每日登入即可解鎖對應天數的榮譽徽章！</p>
+            <div id="loginBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl"></div>
           </div>
 
-          <!-- 連續答題成功卡片 -->
           <div class="bg-white duo-card p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
@@ -204,10 +200,8 @@
               </h3>
               <span id="quizStreakCount" class="bg-yellow-100 text-yellow-700 font-black px-3 py-1 rounded-full text-sm">0 次</span>
             </div>
-            <p class="text-xs text-slate-500 mb-4" data-i18n="quizStreakDesc">在考試中連續答對 10 題以上或累積答題成功次數解鎖專屬頭銜！</p>
-            <div id="quizBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl">
-              <!-- 動態渲染 1~1000 答題徽章 -->
-            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="quizStreakDesc">在考試中累積答題成功次數解鎖專屬頭銜！</p>
+            <div id="quizBadgesGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto p-2 border border-slate-100 rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -215,17 +209,13 @@
       <!-- 頁面三：玩家排行榜與分析圖表 -->
       <div id="tabContent3" class="tab-content hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- 排行榜 -->
           <div class="bg-white duo-card p-6 lg:col-span-1">
             <h3 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
               <i class="fa-solid fa-trophy text-amber-500"></i> <span data-i18n="leaderboardTitle">登入玩家排行</span>
             </h3>
-            <div id="leaderboardList" class="space-y-3 max-h-96 overflow-y-auto pr-1">
-              <!-- 動態排行榜 -->
-            </div>
+            <div id="leaderboardList" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
           </div>
 
-          <!-- Chart.js 統計圖表 -->
           <div class="bg-white duo-card p-6 lg:col-span-2 flex flex-col justify-between">
             <h3 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
               <i class="fa-solid fa-chart-pie text-indigo-500"></i> <span data-i18n="analyticsTitle">玩家答題與學習表現分析</span>
@@ -237,7 +227,7 @@
         </div>
       </div>
 
-      <!-- 頁面四：所有題庫 (支援 10,000 題、關鍵字搜尋、下拉跳頁、捲動) -->
+      <!-- 頁面四：所有題庫總覽 -->
       <div id="tabContent4" class="tab-content hidden space-y-4">
         <div class="bg-white duo-card p-6">
           <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
@@ -246,12 +236,9 @@
               <p class="text-xs text-slate-500 mt-1" data-i18n="bankSub">支援關鍵字即時搜尋、區間下拉快速跳頁與捲動載入</p>
             </div>
             <div class="flex items-center gap-3">
-              <!-- 區間下拉跳頁 -->
               <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
                 <span class="text-xs font-bold text-slate-600" data-i18n="jumpRange">跳至區間:</span>
-                <select id="pageRangeSelect" onchange="jumpToBankRange(this.value)" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-                  <!-- 動態生成區間選單 -->
-                </select>
+                <select id="pageRangeSelect" onchange="jumpToBankRange(this.value)" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"></select>
               </div>
               <button onclick="openAddQuestionModal()" class="px-4 py-2 bg-green-500 text-white text-xs font-bold rounded-xl btn-3d flex items-center gap-1">
                 <i class="fa-solid fa-plus"></i> <span data-i18n="addQuestion">新增題目</span>
@@ -259,7 +246,6 @@
             </div>
           </div>
 
-          <!-- 搜尋列 -->
           <div class="mb-4">
             <div class="relative">
               <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
@@ -267,7 +253,6 @@
             </div>
           </div>
 
-          <!-- 捲動與題庫表格容器 -->
           <div id="bankTableScrollContainer" onscroll="handleBankScroll(this)" class="max-h-[500px] overflow-y-auto border-2 border-slate-100 rounded-xl">
             <table class="w-full text-left border-collapse">
               <thead class="bg-slate-100 text-slate-700 text-xs uppercase sticky top-0 z-10">
@@ -279,9 +264,7 @@
                   <th class="p-3 border-b text-center" data-i18n="thAction">操作</th>
                 </tr>
               </thead>
-              <tbody id="bankTableBody" class="text-sm divide-y divide-slate-100">
-                <!-- 動態載入題庫項目 -->
-              </tbody>
+              <tbody id="bankTableBody" class="text-sm divide-y divide-slate-100"></tbody>
             </table>
           </div>
         </div>
@@ -337,11 +320,10 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // 全域變數
     window.currentUser = null;
     window.questionBank = [];
     window.filteredBank = [];
-    window.displayLimit = 100; // 預設每批顯示100題，支援順暢捲動
+    window.displayLimit = 100;
     window.currentQuizIndex = 0;
     window.quizQuestions = [];
     window.currentQuizQuestion = null;
@@ -350,7 +332,12 @@
     window.currentLang = 'zh';
     let chartInstance = null;
 
-    // 多國語系字典
+    // 清理字串函式：移除 #, 數字, 括號及其內容，讓題目與答案完美乾淨
+    window.cleanText = function(text) {
+      if (!text) return "";
+      return text.replace(/#\d+/g, '').replace(/\s*\([^)]*\)/g, '').trim();
+    };
+
     const i18n = {
       zh: {
         navTitle: "日本人學漢語",
@@ -373,9 +360,9 @@
         quizHeader: "日本語對應漢語測驗",
         nextQuestion: "下一題",
         loginStreakTitle: "連續登入成就 (1~1000天)",
-        loginStreakDesc: "每日登入即可解鎖對應天數的榮譽徽章！最高解鎖至 1000 天。",
+        loginStreakDesc: "每日登入即可解鎖對應天數的榮譽徽章！",
         quizStreakTitle: "連續答題成功 (1~1000次)",
-        quizStreakDesc: "在考試中連續答對 10 題以上或累積答題成功次數解鎖專屬頭銜！",
+        quizStreakDesc: "在考試中連續答對累積答題成功次數！",
         leaderboardTitle: "登入玩家排行",
         analyticsTitle: "玩家答題與學習表現分析",
         bankHeader: "jatoch.json 題庫總覽 (共 10,000 題)",
@@ -414,9 +401,9 @@
         quizHeader: "日本語対応中国語クイズ",
         nextQuestion: "次の問題",
         loginStreakTitle: "連続ログイン実績 (1~1000日)",
-        loginStreakDesc: "毎日ログインして対応する日の栄誉バッジをアンロック！",
+        loginStreakDesc: "毎日ログインしてバッジをアンロック！",
         quizStreakTitle: "連続正解実績 (1~1000回)",
-        quizStreakDesc: "クイズで連続正解して専用の称号を獲得しよう！",
+        quizStreakDesc: "クイズで連続正解して称号を獲得！",
         leaderboardTitle: "プレーヤーランキング",
         analyticsTitle: "学習パフォーマンス分析",
         bankHeader: "jatoch.json 問題集一覧 (計10,000問)",
@@ -455,9 +442,9 @@
         quizHeader: "Japanese-Chinese Matching Quiz",
         nextQuestion: "Next Question",
         loginStreakTitle: "Login Streaks (1-1000 Days)",
-        loginStreakDesc: "Log in daily to unlock commemorative badges up to 1000 days!",
+        loginStreakDesc: "Log in daily to unlock commemorative badges!",
         quizStreakTitle: "Quiz Success Streaks (1-1000)",
-        quizStreakDesc: "Build up consecutive correct answers in quizzes to unlock titles!",
+        quizStreakDesc: "Build up consecutive correct answers in quizzes!",
         leaderboardTitle: "Player Leaderboard",
         analyticsTitle: "Learning Performance Analytics",
         bankHeader: "jatoch.json Question Bank (10,000 items)",
@@ -482,11 +469,7 @@
       ['zh', 'ja', 'en'].forEach(l => {
         const btn = document.getElementById(`lang${l.charAt(0).toUpperCase() + l.slice(1)}`);
         if (btn) {
-          if (l === lang) {
-            btn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-white text-green-600 shadow-sm";
-          } else {
-            btn.className = "px-3 py-1 text-xs font-bold rounded-lg text-slate-600";
-          }
+          btn.className = (l === lang) ? "px-3 py-1 text-xs font-bold rounded-lg bg-white text-green-600 shadow-sm" : "px-3 py-1 text-xs font-bold rounded-lg text-slate-600";
         }
       });
       const dict = i18n[lang];
@@ -496,14 +479,12 @@
       });
     };
 
-    // 監聽 Auth 狀態
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         window.currentUser = user;
         document.getElementById("authView").classList.add("hidden");
         document.getElementById("appView").classList.remove("hidden");
         
-        // 取得真實姓名與玩家數據
         const userRef = ref(db, `users/${user.uid}`);
         const snap = await get(userRef);
         let realName = user.email.split('@')[0];
@@ -513,7 +494,6 @@
         document.getElementById("userNameDisplay").textContent = `${realName} (${user.email})`;
         document.getElementById("userInfoSection").classList.remove("hidden");
 
-        // 同步登入次數與答題次數
         if (snap.exists()) {
           const data = snap.val();
           window.loginStreak = data.loginStreak || 1;
@@ -522,7 +502,6 @@
           await set(userRef, { realName: realName, email: user.email, loginStreak: 1, correctStreak: 0, lastLogin: new Date().toISOString() });
         }
 
-        // 載入題庫資料
         await loadQuestionBankFromDB();
         renderBadges();
         initChart();
@@ -536,7 +515,6 @@
       }
     });
 
-    // 登入功能
     window.handleAuth = async function(e) {
       e.preventDefault();
       const email = document.getElementById("authEmail").value;
@@ -549,7 +527,6 @@
       }
     };
 
-    // 註冊功能 (包含真實姓名記錄，無需審核直接通過)
     window.handleRegister = async function() {
       const email = document.getElementById("authEmail").value;
       const pass = document.getElementById("authPassword").value;
@@ -579,14 +556,12 @@
       await signOut(auth);
     };
 
-    // 載入題庫 (優先從 Firebase讀取，若無則生成 10,000 題的 jatoch.json 預設範本並寫入)
     window.loadQuestionBankFromDB = async function() {
       try {
         const snap = await get(ref(db, "questionBank"));
         if (snap.exists()) {
           window.questionBank = snap.val();
         } else {
-          // 生成 10000 題 jatoch.json 初始模擬資料
           window.questionBank = [];
           const sampleWords = [
             { c: "你好", p: "nǐ hǎo", j: "こんにちは" },
@@ -618,7 +593,6 @@
       }
     };
 
-    // 分頁切換
     window.switchTab = function(tabNum) {
       for (let i = 1; i <= 4; i++) {
         const content = document.getElementById(`tabContent${i}`);
@@ -638,10 +612,9 @@
       if (tabNum === 4) renderBankTable();
     };
 
-    // 頁面一：隨機考試引擎 (每次生成10題)
+    // 頁面一：隨機考試引擎 (套用 cleanText 移除 # 與數字、括號)
     window.startQuiz = function() {
       if (!window.questionBank || window.questionBank.length === 0) return;
-      // 隨機抽選 10 題
       const shuffled = [...window.questionBank].sort(() => 0.5 - Math.random());
       window.quizQuestions = shuffled.slice(0, 10);
       window.currentQuizIndex = 0;
@@ -661,20 +634,27 @@
       }
 
       window.currentQuizQuestion = window.quizQuestions[window.currentQuizIndex];
+      // 保留未清理的中文供語音朗讀用，顯示時則利用 cleanText 移除數字與 #
+      window.currentQuizQuestion.rawChinese = window.currentQuizQuestion.chinese;
+      
+      const cleanPromptText = window.cleanText(window.currentQuizQuestion.chinese);
+
       document.getElementById("quizProgressBadge").textContent = `第 ${window.currentQuizIndex + 1} 題 / 共 10 題`;
-      document.getElementById("quizPrompt").textContent = window.currentQuizQuestion.chinese;
+      document.getElementById("quizPrompt").textContent = cleanPromptText;
       document.getElementById("quizSubPrompt").textContent = `拼音: ${window.currentQuizQuestion.pinyin} | 請選出正確的日文含義`;
       document.getElementById("quizFeedback").textContent = "";
       document.getElementById("nextQuizBtn").classList.add("hidden");
 
-      // 產生 4 個選項 (1個正確，3個干擾項)
-      const correctAns = window.currentQuizQuestion.japanese;
+      const correctAnsClean = window.cleanText(window.currentQuizQuestion.japanese);
+      
+      // 取得其他選項並清理掉數字與括號
       const others = window.questionBank
-        .filter(q => q.japanese !== correctAns)
+        .filter(q => window.cleanText(q.japanese) !== correctAnsClean)
         .sort(() => 0.5 - Math.random())
         .slice(0, 3)
-        .map(q => q.japanese);
-      const options = [...others, correctAns].sort(() => 0.5 - Math.random());
+        .map(q => window.cleanText(q.japanese));
+      
+      const options = [...others, correctAnsClean].sort(() => 0.5 - Math.random());
 
       const optContainer = document.getElementById("quizOptions");
       optContainer.innerHTML = "";
@@ -682,7 +662,7 @@
         const btn = document.createElement("button");
         btn.className = "p-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 hover:border-green-500 hover:bg-green-50 transition text-left shadow-sm flex justify-between items-center";
         btn.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-chevron-right text-slate-300"></i>`;
-        btn.onclick = () => checkQuizAnswer(opt, correctAns, btn);
+        btn.onclick = () => checkQuizAnswer(opt, correctAnsClean, btn);
         optContainer.appendChild(btn);
       });
     };
@@ -714,10 +694,11 @@
       loadQuizQuestion();
     };
 
-    // 語音朗讀功能 (TTS)
     window.speakText = function(txt) {
       if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(txt);
+        // 朗讀前同樣清理掉 # 與數字
+        const cleanToSpeak = window.cleanText(txt);
+        const utterance = new SpeechSynthesisUtterance(cleanToSpeak);
         utterance.lang = 'zh-CN';
         window.speechSynthesis.speak(utterance);
       } else {
@@ -725,7 +706,6 @@
       }
     };
 
-    // 頁面二：動態渲染 1~1000 次連續登入與答題徽章
     window.renderBadges = function() {
       const loginGrid = document.getElementById("loginBadgesGrid");
       const quizGrid = document.getElementById("quizBadgesGrid");
@@ -737,7 +717,6 @@
       loginGrid.innerHTML = "";
       quizGrid.innerHTML = "";
 
-      // 為了效能，每 10 檔展示重要里程碑或完整 1~1000 迴圈
       for (let i = 1; i <= 1000; i += (i > 100 ? 50 : 1)) {
         const unlocked = i <= window.loginStreak;
         const lDiv = document.createElement("div");
@@ -753,7 +732,6 @@
       }
     };
 
-    // 頁面三：玩家排行榜與分析圖表
     window.loadLeaderboard = async function() {
       const listEl = document.getElementById("leaderboardList");
       if (!listEl) return;
@@ -808,7 +786,6 @@
       });
     };
 
-    // 頁面四：題庫總覽 (支援 10,000 題、下拉跳頁與捲動載入)
     window.renderBankTable = function() {
       const tbody = document.getElementById("bankTableBody");
       const pageSelect = document.getElementById("pageRangeSelect");
@@ -818,7 +795,6 @@
       const pageSize = 100;
       const totalPages = Math.ceil(items.length / pageSize) || 1;
 
-      // 產生跳至區間下拉選單
       if (pageSelect && pageSelect.children.length === 0) {
         pageSelect.innerHTML = "";
         for (let i = 0; i < totalPages; i++) {
@@ -831,7 +807,6 @@
         }
       }
 
-      // 渲染前 window.displayLimit 筆項目 (無窮捲動累積)
       const currentList = items.slice(0, window.displayLimit);
       tbody.innerHTML = "";
       currentList.forEach((q, idx) => {
@@ -851,7 +826,6 @@
       });
     };
 
-    // 區間下拉跳頁
     window.jumpToBankRange = function(pageIndex) {
       const pageSize = 100;
       window.displayLimit = (parseInt(pageIndex) + 1) * pageSize;
@@ -860,7 +834,6 @@
       if (container) container.scrollTop = 0;
     };
 
-    // 下拉捲動載入更多 (Infinite Scroll)
     window.handleBankScroll = function(el) {
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
         if (window.displayLimit < (window.filteredBank || window.questionBank).length) {
@@ -870,7 +843,6 @@
       }
     };
 
-    // 關鍵字搜尋題庫
     window.filterBankData = function(keyword) {
       const kw = keyword.toLowerCase();
       window.filteredBank = window.questionBank.filter(q => 
@@ -882,7 +854,6 @@
       renderBankTable();
     };
 
-    // 新增 / 編輯 Modal 操控
     window.openAddQuestionModal = function() {
       document.getElementById("editQuestionIndex").value = "";
       document.getElementById("modalChinese").value = "";
@@ -940,7 +911,6 @@
       }
     };
 
-    // Excel 匯出與匯入功能
     window.exportToExcel = function() {
       const data = window.questionBank.map(q => ({
         "編號": q.id,
@@ -984,7 +954,6 @@
       reader.readAsArrayBuffer(file);
     };
 
-    // PNG / PDF 匯出功能
     window.exportPagePNG = function() {
       html2canvas(document.body).then(canvas => {
         const link = document.createElement('a');
